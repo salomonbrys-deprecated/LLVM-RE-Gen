@@ -8,8 +8,11 @@
 #ifndef STATE_H_
 #define STATE_H_
 
+//#include <list>
 #include <map>
-#include <list>
+
+struct State;
+typedef std::pair<int, std::map<int, State*> > StateHelper;
 
 struct IState
 {
@@ -26,8 +29,8 @@ struct IState
 
 struct State : public IState
 {
-	State() : _name(_nextName), _final(true), _success(true) { ++_nextName; _stateList.push_back(this); }
-	virtual ~State() { _stateList.remove(this); }
+	State(StateHelper & helper) : _helper(helper), _name(helper.first), _final(true), _success(true) { ++helper.first; helper.second.insert(std::pair<int, State*>(_name, this)); }
+	virtual ~State() { _helper.second.erase(_name); }
 
 	virtual void Final(bool is) { _final = is; }
 	virtual bool Final(void) const { return _final; }
@@ -37,16 +40,16 @@ struct State : public IState
 	virtual void addTransition(int c, IState* s) { _transitions.insert(std::pair<int, IState*>(c, s)); }
 	virtual int Name(void) const { return _name; }
 
-	static const std::list<State*> & StateList(void) { return _stateList; }
-
 private:
-	int	_name;
+	StateHelper & _helper;
+
+	const int	_name;
 	bool _final;
 	bool _success;
 	std::multimap<int, IState*> _transitions;
 
-	static std::list<State*> _stateList;
-	static int _nextName;
+	State(const State &);
+	State & operator = (const State &);
 };
 
 struct StateReplicator : public IState
@@ -65,6 +68,9 @@ struct StateReplicator : public IState
 private:
 	IState * _orig;
 	IState * _copy;
+
+	StateReplicator(const State &);
+	State & operator = (const State &);
 };
 
 #endif /* STATE_H_ */

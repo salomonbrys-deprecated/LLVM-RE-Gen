@@ -32,10 +32,10 @@ public:
 	And(const And &l) : DualCont(l) {}
 	virtual ~And() {}
 	virtual INode * clone() { return new And(*this); }
-	virtual IState * stateify(IState * start, IState * success, bool replaceFinal)
+	virtual IState * stateify(IState * start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
-		IState * middle = _r1->stateify(start, 0, replaceFinal);
-		success = _r2->stateify(middle, success, replaceFinal);
+		IState * middle = _r1->stateify(start, 0, replaceFinal, helper);
+		success = _r2->stateify(middle, success, replaceFinal, helper);
 		return success;
 	};
 
@@ -54,10 +54,10 @@ public:
 	Or(const Or &l) : DualCont(l) {}
 	virtual ~Or() {}
 	virtual INode * clone() { return new Or(*this); };
-	virtual IState * stateify(IState *start, IState * success, bool replaceFinal)
+	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
-		IState * first = _r1->stateify(start, success, replaceFinal);
-		IState * second = _r2->stateify(start, success, replaceFinal);
+		IState * first = _r1->stateify(start, success, replaceFinal, helper);
+		IState * second = _r2->stateify(start, success, replaceFinal, helper);
 		return new StateReplicator(first, second);
 	};
 

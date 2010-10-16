@@ -31,9 +31,9 @@ public:
 	Repeat(const Repeat &l) : SingleCont(l) {}
 	virtual ~Repeat() {}
 	virtual INode * clone() { return new Repeat(*this); };
-	virtual IState * stateify(IState *start, IState *, bool)
+	virtual IState * stateify(IState *start, IState *, bool, StateHelper & helper)
 	{
-		_r->stateify(start, start, false);
+		_r->stateify(start, start, false, helper);
 		return start;
 	};
 
@@ -52,11 +52,11 @@ public:
 	Optional(const Optional &l) : SingleCont(l) {}
 	virtual ~Optional() {}
 	virtual INode * clone() { return new Optional(*this); };
-	virtual IState * stateify(IState *start, IState *, bool replaceFinal)
+	virtual IState * stateify(IState *start, IState *, bool replaceFinal, StateHelper & helper)
 	{
-		IState * success = new State;
+		IState * success = new State(helper);
 		success->Final(start->Final());
-		_r->stateify(start, success, false);
+		_r->stateify(start, success, false, helper);
 		return new StateReplicator(start, success);
 	};
 

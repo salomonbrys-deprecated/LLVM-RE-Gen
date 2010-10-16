@@ -18,7 +18,7 @@ public:
 	virtual ~INode() {}
 	virtual void disp(std::ostream & os, unsigned int nSpace) const = 0;
 	virtual INode * clone(void) = 0;
-	virtual IState * stateify(IState * start, IState * success, bool replaceFinal) = 0;
+	virtual IState * stateify(IState * start, IState * success, bool replaceFinal, StateHelper & helper) = 0;
 
 private:
 	INode & operator = (const INode &);

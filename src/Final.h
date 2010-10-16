@@ -20,11 +20,11 @@ public:
 
 	virtual void addTransitions(IState * start, IState * success) = 0;
 
-	virtual IState * stateify(IState *start, IState * success, bool replaceFinal)
+	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		if (!success)
 		{
-			success = new State;
+			success = new State(helper);
 			if (replaceFinal)
 				start->Final(false);
 			else
@@ -124,11 +124,15 @@ public:
 	virtual INode * clone() { return new FinalNotSequence(*this); };
 	virtual void addTransitions(IState * start, IState * success)
 	{
-		start->addTransition(-1, success);
-		State * fail = new State;
-		fail->Success(false);
+		// TODO: Find a proper solution for the Not sequence.
+		// This currently is NOT the proper behavior (it behaves like a OR sequence)
 		for (std::vector<char>::const_iterator i = _s.begin(); i != _s.end(); ++i)
-			start->addTransition(*i, fail);
+			start->addTransition(*i, success);
+//		start->addTransition(-1, success);
+//		State * fail = new State;
+//		fail->Success(false);
+//		for (std::vector<char>::const_iterator i = _s.begin(); i != _s.end(); ++i)
+//			start->addTransition(*i, fail);
 	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
