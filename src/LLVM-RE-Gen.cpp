@@ -70,9 +70,11 @@ void determine(std::map<int, State*> ndStateList, DFSM & dfsm)
 			std::set<int> nextState;
 			for (std::set<int>::const_iterator stId = toDo.front().begin(); stId != toDo.front().end(); ++stId)
 			{
-				std::pair<std::multimap<int, IState*>::const_iterator, std::multimap<int, IState*>::const_iterator> eqr = ndStateList[*stId]->Transitions().equal_range(*chars);
-				if (eqr.first == eqr.second)
-					eqr = ndStateList[*stId]->Transitions().equal_range(-1);
+				std::pair<std::multimap<int, IState*>::const_iterator, std::multimap<int, IState*>::const_iterator> eqr;
+				eqr = ndStateList[*stId]->Transitions().equal_range(*chars);
+				for (; eqr.first != eqr.second; ++eqr.first)
+					nextState.insert(eqr.first->second->Name());
+				eqr = ndStateList[*stId]->Transitions().equal_range(-1);
 				for (; eqr.first != eqr.second; ++eqr.first)
 					nextState.insert(eqr.first->second->Name());
 			}
@@ -91,18 +93,17 @@ void determine(std::map<int, State*> ndStateList, DFSM & dfsm)
 				dstate->transitions[*chars] = nextStateId;
 
 			//std::cout << " -> " << nextStateId << std::endl;
-
-			dfsm[connections[toDo.front()]] = dstate;
 		}
 
+       		dfsm[connections[toDo.front()]] = dstate;
 		toDo.pop();
 	}
 }
 
 int main()
 {
-//	std::string regexp = "a*ab?c?.(bb)?.b(cc)?.?"; // test : acbb
-	std::string regexp = "aa*b"; // test : acbb
+	std::string regexp = "a*ab?c?.(bb)?.b(cc)?.?"; // test : acbb
+	// std::string regexp = "a.*b"; // test : acbb
 
 	try
 	{
