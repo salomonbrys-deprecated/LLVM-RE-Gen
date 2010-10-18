@@ -23,8 +23,6 @@ struct DState
 {
 	std::map<int, int> transitions;
 	bool final;
-
-	bool operator == (const DState & l) { return (final == l.final && transitions == l.transitions); }
 };
 
 typedef std::map<int, DState*> DFSM; // = Determinist Finite State Machine
@@ -108,24 +106,44 @@ void reduce(DFSM & dfsm)
 	bool cont = true;
 	while (cont)
 	{
-		std::cout << "REDUCE ITERATION" << std::endl;
+//		std::cout << "REDUCE ITERATION" << std::endl;
 		cont = false;
 		for (DFSM::iterator i = dfsm.begin(); i != dfsm.end(); ++i)
 		{
 			DFSM::iterator j = i;
-			for (++j; j != dfsm.end(); ++j)
-				if (*j->second == *i->second)
+
+			std::map<int, int> iTransitions = i->second->transitions;
+			for (std::map<int, int>::iterator tr = iTransitions.begin(); tr != iTransitions.end(); ++tr)
+				if (tr->second == i->first)
+					tr->second = -2;
+
+			++j;
+			while (j != dfsm.end())
+			{
+//				std::cout << "testing " << i->first << " and " << j->first << std::endl;
+				std::map<int, int> jTransitions = j->second->transitions;
+				for (std::map<int, int>::iterator tr = jTransitions.begin(); tr != jTransitions.end(); ++tr)
+					if (tr->second == j->first)
+						tr->second = -2;
+				if (j->second->final == i->second->final && (jTransitions == iTransitions || j->second->transitions == i->second->transitions ))
 				{
-					std::cout << "SAME: " << i->first << ", " << j->first << std::endl;
+//					std::cout << "SAME: " << i->first << ", " << j->first << std::endl;
 					for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st)
+					{
 						for (std::map<int, int>::iterator tr = st->second->transitions.begin(); tr != st->second->transitions.end(); ++tr)
 							if (tr->second == j->first)
 							{
 								tr->second = i->first;
 								cont = true;
 							}
-					dfsm.erase(j);
+					}
+					DFSM::iterator erase = j;
+					++j;
+					dfsm.erase(erase);
 				}
+				else
+					++j;
+			}
 		}
 	}
 }
@@ -133,6 +151,7 @@ void reduce(DFSM & dfsm)
 int main()
 {
 	std::string regexp = "a*ab?c?.(bb)?.b(cc)?.?"; // test : acbb
+//	std::string regexp = "a(b?(b|c)*|c?(b|c)*)"; // test the reduction
 
 	try
 	{
