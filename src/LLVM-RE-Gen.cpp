@@ -23,6 +23,8 @@ struct DState
 {
 	std::map<int, int> transitions;
 	bool final;
+
+	bool operator == (const DState & l) { return (final == l.final && transitions == l.transitions); }
 };
 
 typedef std::map<int, DState*> DFSM; // = Determinist Finite State Machine
@@ -95,8 +97,36 @@ void determine(std::map<int, State*> ndStateList, DFSM & dfsm)
 			//std::cout << " -> " << nextStateId << std::endl;
 		}
 
-       		dfsm[connections[toDo.front()]] = dstate;
+		dfsm[connections[toDo.front()]] = dstate;
+
 		toDo.pop();
+	}
+}
+
+void reduce(DFSM & dfsm)
+{
+	bool cont = true;
+	while (cont)
+	{
+		std::cout << "REDUCE ITERATION" << std::endl;
+		cont = false;
+		for (DFSM::iterator i = dfsm.begin(); i != dfsm.end(); ++i)
+		{
+			DFSM::iterator j = i;
+			for (++j; j != dfsm.end(); ++j)
+				if (*j->second == *i->second)
+				{
+					std::cout << "SAME: " << i->first << ", " << j->first << std::endl;
+					for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st)
+						for (std::map<int, int>::iterator tr = st->second->transitions.begin(); tr != st->second->transitions.end(); ++tr)
+							if (tr->second == j->first)
+							{
+								tr->second = i->first;
+								cont = true;
+							}
+					dfsm.erase(j);
+				}
+		}
 	}
 }
 
@@ -142,7 +172,21 @@ int main()
 							<< " -> " << tIt->second << std::endl;
 		}
 		std::cout << "========================================" << std::endl;
-	}
+
+		reduce(dfsm);
+
+		std::cout << std::endl << "===== R-D-FSM ==========================" << std::endl;
+		for (DFSM::const_iterator sIt = dfsm.begin(); sIt != dfsm.end(); ++sIt)
+		{
+			std::cout << "D-STATE " << sIt->first << (sIt->second->final ? " (F)" : "") << std::endl;
+
+			for (std::map<int, int>::const_iterator tIt = sIt->second->transitions.begin(); tIt != sIt->second->transitions.end(); ++tIt)
+				std::cout	<< std::setw(5) << tIt->first << ':'
+							<< (isgraph(tIt->first) ? (char)tIt->first : ' ')
+							<< " -> " << tIt->second << std::endl;
+		}
+		std::cout << "========================================" << std::endl;
+}
 	catch (const std::string & str)
 	{
 		std::cout	<< std::endl

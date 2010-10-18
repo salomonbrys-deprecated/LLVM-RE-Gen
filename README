@@ -3,5 +3,64 @@ LLVM Regular Expresion Generator is a compiler that generates state machines
 from ASCII POSIX regular expression and compile them in LLVM IR so the compiled
 regular expression can be very fast to execute at run-time.
 
-This project is part of the CoCoT project, is EXPERIMENTAL and probably INCOMPLETE.
-It is designed to be a proof-of-concept and only handles ASCII characters.
+This project is part of the CoCoT project, is EXPERIMENTAL and probably
+INCOMPLETE. It is designed to be a proof-of-concept and only handles ASCII
+characters.
+
+This project is aimed to be used inside a lexer. It therefore does not handles
+^ nor $. However, it should not be very hard to implement.
+
+Here is a list of currently supported features:
+ab		= 'a' followed by 'b'
+a|b		= 'a' or 'b'
+a?		= 'a' zero or one time 
+a*		= 'a' zero or any times 
+a+		= aa*
+(ab)	= group composed by 'ab'.
+			Can be used as a single token: '(ab)*', '(ab)|c', etc.
+[abc]	= 'a' or 'b' or 'c'
+[^abc]	= any character but 'a' or 'b' or 'c'
+[a-c]	= any character from 'a' to 'c'
+
+The escape characters recognized are : \a, \b, \f, \r, \n, \t
+as well as the hexadecimal escape sequence : \x6D (='m')
+
+Inside character sequence, you can add:
+	[:alnum:]	= [A-Za-z0-9]
+	[:word:]	= [A-Za-z0-9_]
+	[:alpha:]	= [A-Za-z]
+	[:blank:]	= [ \t]
+	[:cntrl:]	= [\x00-\x1F\x7F]
+	[:digit:]	= [0-9]
+	[:graph:]	= [\x21-\x7E]
+	[:lower:]	= [a-z]
+	[:print:]	= [\x20-\x7E]
+	[:punct:]	= [][!"#$%&'()*+,./:;<=>?@\^_`{|}~-]
+	[:space:]	= [ \t\r\n\v\f]
+	[:upper:]	= [A-Z]
+	[:xdigit:]	= [A-Fa-f0-9]
+Example:
+	[[:alnum:]@] = [A-Za-z0-9@]
+
+The parser is VERY context-dependant.
+Hence, this is a correct regular expression: [...]]
+It means: Any character from '.' to ']'.
+	- Because we are in a character sequence, '.' is not a special char.
+	- Because it is the begining of the sequence, '..' is not recognized as it
+		needs at least a character to begin the range. Therefore '.' is
+		recognized as a simple character.
+	- '..' is recognized as the range token.
+	- Because the end of the range is expected, ']' is recognized as the end of
+		the range and not the end of the sequence.
+	- The second ']' is recognized as the end of the sequence.
+This highly context-dependant parser permits to avoid escape characters in a
+lot of weird cases BUT it can generate weird errors. For example the [a..]b
+will generate a "Incomplete character sequence" error and not "Incomplete
+character range" error because the range a..] is correct and therefore the ']'
+is recognized as the end of the character range, so the sequence is still not
+terminated.
+Another weird effect can be showed with this expression: '[A..]c[de]'. In this
+case, this expression defines a SINGLE character sequence that can recognize
+any charcater from 'A' to ']' or the charcters 'c', or '[', or 'd', or 'e'.
+Because we are in a character sequence, '[' cannot be used as a begin sequence
+token and is therefore recognized as a simple character inside the sequence.

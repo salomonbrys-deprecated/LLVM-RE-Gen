@@ -34,9 +34,6 @@ char getAChar(std::string::const_iterator & c, std::string::const_iterator & end
 		case 'b':
 			++c;
 			return '\b';
-		//case 'e':
-		//	++c;
-		//	return '\e';
 		case 'f':
 			++c;
 			return '\f';
@@ -184,7 +181,7 @@ INode * parseCharSequence(std::string::const_iterator & c, std::string::const_it
 	}
 
 	if (c == end)
-		throw std::string("Incomplete character range");
+		throw std::string("Incomplete character sequence");
 
 	return ret;
 }
