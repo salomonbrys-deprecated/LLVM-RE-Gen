@@ -90,7 +90,8 @@ public:
 	FinalSequence *	addRange(char cs, char ce) { for (; cs <= ce; ++cs) _s.insert(cs); return this; }
 
 protected:
-	std::set<char> _s;
+	typedef std::set<char> CharSet;
+	CharSet _s;
 };
 
 class FinalOrSequence : public FinalSequence
@@ -102,14 +103,14 @@ public:
 	virtual INode * clone() { return new FinalOrSequence(*this); };
 	virtual void addTransitions(IState * start, IState * success)
 	{
-		for (std::set<char>::const_iterator i = _s.begin(); i != _s.end(); ++i)
+		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)
 			start->addTransition(*i, success);
 	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << '[';
-		for (std::set<char>::const_iterator i = _s.begin(); i != _s.end(); ++i)
+		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)
 			os << *i;
 		os << ']' << std::endl;
 	}
@@ -124,9 +125,9 @@ public:
 	virtual INode * clone() { return new FinalNotSequence(*this); };
 	virtual void addTransitions(IState * start, IState * success)
 	{
-		// NOTE: This behavior is currently the only one that would prevent
-		//       this library to be ported to Unicode. However, this is by far
-		//       the easiest way to handle not-sequences.
+		// NOTE: This behavior is currently the only one that would really
+		//		prevent this library to be ported to Unicode. However, this is
+		//		by far the easiest way to handle not-sequences.
 		for (char i = 0; isascii(i); ++i)
 			if (_s.find(i) == _s.end())
 				start->addTransition(i, success);
@@ -135,7 +136,7 @@ public:
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << "NOT [";
-		for (std::set<char>::const_iterator i = _s.begin(); i != _s.end(); ++i)
+		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)
 			os << *i;
 		os << ']' << std::endl;
 	}
