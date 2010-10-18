@@ -1,4 +1,7 @@
 
 LLVM Regular Expresion Generator is a compiler that generates state machines
-from POSIX regular expression and compile them in LLVM IR so the compiled
+from ASCII POSIX regular expression and compile them in LLVM IR so the compiled
 regular expression can be very fast to execute at run-time.
+
+This project is part of the CoCoT project, is EXPERIMENTAL and probably INCOMPLETE.
+It is designed to be a proof-of-concept and only handles ASCII characters.

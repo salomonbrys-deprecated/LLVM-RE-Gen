@@ -103,7 +103,6 @@ void determine(std::map<int, State*> ndStateList, DFSM & dfsm)
 int main()
 {
 	std::string regexp = "a*ab?c?.(bb)?.b(cc)?.?"; // test : acbb
-	// std::string regexp = "a.*b"; // test : acbb
 
 	try
 	{
@@ -121,10 +120,7 @@ int main()
 		std::cout << std::endl << "===== ND-FSM ===========================" << std::endl;
 		for (std::map<int, State*>::const_iterator sIt = helper.second.begin(); sIt != helper.second.end(); ++sIt)
 		{
-			std::cout << "ND-STATE " << sIt->first;
-			if (sIt->second->Final())
-				std::cout << (sIt->second->Success() ? " (S)" : " (F)");
-			std::cout << std::endl;
+			std::cout << "ND-STATE " << sIt->first << (sIt->second->Final() ? " (F)" : "") << std::endl;
 			for (std::multimap<int, IState*>::const_iterator tIt = sIt->second->Transitions().begin(); tIt != sIt->second->Transitions().end(); ++tIt)
 				std::cout	<< std::setw(5) << tIt->first << ':'
 							<< (isgraph(tIt->first) ? (char)tIt->first : ' ')

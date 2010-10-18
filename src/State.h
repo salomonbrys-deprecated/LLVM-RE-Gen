@@ -20,8 +20,6 @@ struct IState
 
 	virtual void Final(bool) = 0;
 	virtual bool Final(void) const = 0;
-	virtual void Success(bool) = 0;
-	virtual bool Success(void) const = 0;
 	virtual const std::multimap<int, IState*> & Transitions(void) const = 0;
 	virtual void addTransition(int c, IState* s) = 0;
 	virtual int Name(void) const  = 0;
@@ -29,13 +27,11 @@ struct IState
 
 struct State : public IState
 {
-	State(StateHelper & helper) : _helper(helper), _name(helper.first), _final(true), _success(true) { ++helper.first; helper.second.insert(std::pair<int, State*>(_name, this)); }
+	State(StateHelper & helper) : _helper(helper), _name(helper.first), _final(true) { ++helper.first; helper.second.insert(std::pair<int, State*>(_name, this)); }
 	virtual ~State() { _helper.second.erase(_name); }
 
 	virtual void Final(bool is) { _final = is; }
 	virtual bool Final(void) const { return _final; }
-	virtual void Success(bool is) { _success = is; }
-	virtual bool Success(void) const { return _success; }
 	virtual const std::multimap<int, IState*> & Transitions(void) const { return _transitions; }
 	virtual void addTransition(int c, IState* s) { _transitions.insert(std::pair<int, IState*>(c, s)); }
 	virtual int Name(void) const { return _name; }
@@ -45,7 +41,6 @@ private:
 
 	const int	_name;
 	bool _final;
-	bool _success;
 	std::multimap<int, IState*> _transitions;
 
 	State(const State &);
@@ -59,8 +54,6 @@ struct StateReplicator : public IState
 
 	virtual void Final(bool is) { _orig->Final(is); _copy->Final(is); }
 	virtual bool Final(void) const { return _orig->Final(); }
-	virtual void Success(bool is) { _orig->Success(is); _copy->Success(is); }
-	virtual bool Success(void) const { return _orig->Success(); }
 	virtual const std::multimap<int, IState*> & Transitions(void) const { return _orig->Transitions(); };
 	virtual void addTransition(int c, IState* s) { _orig->addTransition(c, s); _copy->addTransition(c, s); }
 	virtual int Name(void) const { return _orig->Name(); }
