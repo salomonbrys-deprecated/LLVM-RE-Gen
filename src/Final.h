@@ -32,7 +32,7 @@ public:
 		}
 		addTransitions(start, success);
 		return success;
-	};
+	}
 
 protected:
 	Final() {}
@@ -44,11 +44,11 @@ public:
 	FinalChar(char c) : _c(c) {}
 	FinalChar(const FinalChar &l) : _c(l._c) {}
 	virtual ~FinalChar() {}
-	virtual INode * clone() { return new FinalChar(*this); };
+	virtual INode * clone() { return new FinalChar(*this); }
 	virtual void addTransitions(IState * start, IState * success)
 	{
 		start->addTransition(_c, success);
-	};
+	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
@@ -64,7 +64,7 @@ public:
 	FinalAny() {}
 	FinalAny(const FinalAny &) {}
 	virtual ~FinalAny() {}
-	virtual INode * clone() { return new FinalAny(*this); };
+	virtual INode * clone() { return new FinalAny(*this); }
 	virtual void addTransitions(IState * start, IState * success)
 	{
 		start->addTransition(-1, success);
@@ -100,7 +100,7 @@ public:
 	FinalOrSequence() {}
 	FinalOrSequence(const FinalOrSequence &l) : FinalSequence(l) {}
 	virtual ~FinalOrSequence() {}
-	virtual INode * clone() { return new FinalOrSequence(*this); };
+	virtual INode * clone() { return new FinalOrSequence(*this); }
 	virtual void addTransitions(IState * start, IState * success)
 	{
 		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)
@@ -122,7 +122,7 @@ public:
 	FinalNotSequence() {}
 	FinalNotSequence(const FinalNotSequence &l) : FinalSequence(l) {}
 	virtual ~FinalNotSequence() {}
-	virtual INode * clone() { return new FinalNotSequence(*this); };
+	virtual INode * clone() { return new FinalNotSequence(*this); }
 	virtual void addTransitions(IState * start, IState * success)
 	{
 		// NOTE: This behavior is currently the only one that would really

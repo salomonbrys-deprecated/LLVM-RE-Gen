@@ -7,6 +7,7 @@
 //============================================================================
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <iomanip>
 
@@ -14,7 +15,14 @@
 #include <windows.h>
 #endif
 
+#include <llvm/LLVMContext.h>
+#include <llvm/Module.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+
 #include "INode.h"
+
+void CompileRE(llvm::Module * M, llvm::LLVMContext & C, DFSM * dfsm, const std::string & fName);
 
 int main()
 {
@@ -73,6 +81,16 @@ int main()
 							<< " -> " << tIt->second << std::endl;
 		}
 		std::cout << "========================================" << std::endl;
+
+		llvm::LLVMContext C;
+		llvm::OwningPtr<llvm::Module> M(new llvm::Module("RE", C));
+		CompileRE(M.get(), C, &dfsm, "re1");
+
+		llvm::outs() << *M << "\n";
+
+		std::string errorInfo;
+		llvm::raw_fd_ostream out("re1.llvm.bc", errorInfo);
+		llvm::WriteBitcodeToFile(M.get(), out);
 }
 	catch (const std::string & str)
 	{

@@ -1,0 +1,12 @@
+
+int	re1(const char *);
+
+int	puts(const char *);
+
+int	main()
+{
+  if (re1("accccc"))
+    puts("SUCCESS");
+  else
+    puts("FAILURE");
+}

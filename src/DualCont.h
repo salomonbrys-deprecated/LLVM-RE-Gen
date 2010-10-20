@@ -37,7 +37,7 @@ public:
 		IState * middle = _r1->stateify(start, 0, replaceFinal, helper);
 		success = _r2->stateify(middle, success, replaceFinal, helper);
 		return success;
-	};
+	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
@@ -53,13 +53,13 @@ public:
 	Or(INode * r1, INode * r2) : DualCont(r1, r2) {}
 	Or(const Or &l) : DualCont(l) {}
 	virtual ~Or() {}
-	virtual INode * clone() { return new Or(*this); };
+	virtual INode * clone() { return new Or(*this); }
 	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		IState * first = _r1->stateify(start, success, replaceFinal, helper);
 		IState * second = _r2->stateify(start, success, replaceFinal, helper);
 		return new StateReplicator(first, second);
-	};
+	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{

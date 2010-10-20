@@ -58,7 +58,7 @@ char getAChar(std::string::const_iterator & c, std::string::const_iterator & end
 				throw std::string("Incomplete hexadecimal character");
 			hex[1] = *c;
 			++c;
-			int n;
+			unsigned int n;
 			sscanf(hex, "%x", &n);
 			if (!isascii(n))
 				throw std::string("Non-ascii hexadecimal character");

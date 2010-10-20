@@ -63,7 +63,7 @@ struct StateReplicator : public IState
 
 	virtual void Final(bool is) { _orig->Final(is); _copy->Final(is); }
 	virtual bool Final(void) const { return _orig->Final(); }
-	virtual const StateTransitions & Transitions(void) const { return _orig->Transitions(); };
+	virtual const StateTransitions & Transitions(void) const { return _orig->Transitions(); }
 	virtual void addTransition(int c, IState* s) { _orig->addTransition(c, s); _copy->addTransition(c, s); }
 	virtual int Name(void) const { return _orig->Name(); }
 
