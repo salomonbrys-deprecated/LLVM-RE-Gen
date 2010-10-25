@@ -9,6 +9,9 @@ characters.
 
 This project is aimed to be used inside a lexer. It therefore does not handles
 ^ nor $. However, it should not be very hard to implement.
+It simply considers that each given regexp should start on each given string.
+In other word, any '(regexp)' is in fact the equivalent of '^(regexp)' in other
+regular expression libraries.
 
 Here is a list of currently supported features:
 ab		= 'a' followed by 'b'

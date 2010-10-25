@@ -1,3 +1,8 @@
+//============================================================================
+// Name        : Compile.cpp
+// Author      : Salomon BRYS
+// Copyright   : Salomon BRYS, Apache Lisence
+//============================================================================
 
 #include "SingleCont.h"
 #include "Final.h"

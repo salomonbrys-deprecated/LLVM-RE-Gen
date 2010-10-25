@@ -57,7 +57,7 @@ public:
 		IState * success = new State(helper);
 		success->Final(start->Final());
 		_r->stateify(start, success, false, helper);
-		return new StateReplicator(start, success);
+		return new StateReplicator(start, success, helper);
 	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const

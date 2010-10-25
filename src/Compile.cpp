@@ -1,9 +1,8 @@
-/*
- * Compile.cpp
- *
- *  Created on: Oct 18, 2010
- *      Author: salomon
- */
+//============================================================================
+// Name        : Compile.cpp
+// Author      : Salomon BRYS
+// Copyright   : Salomon BRYS, Apache Lisence
+//============================================================================
 
 #include "State.h"
 
@@ -19,11 +18,11 @@
 
 using namespace llvm;
 
-void CompileRE(Module * M, LLVMContext & C, DFSM * dfsm, const std::string & fName)
+Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 {
-//	Function * fPuts = cast<Function>(M->getOrInsertFunction("putchar", Type::getInt32Ty(C), Type::getInt32Ty(C), (Type *)0));
+	LLVMContext & C = M->getContext();
 
-	Function * func = cast<Function>(M->getOrInsertFunction(fName, Type::getInt1Ty(C), Type::getInt8PtrTy(C), (Type *)0));
+	Function * func = cast<Function>(M->getOrInsertFunction(fName, Type::getInt32Ty(C), Type::getInt8PtrTy(C), (Type *)0));
 	Argument * str = func->arg_begin();
 	str->setName("str");
 
@@ -42,39 +41,23 @@ void CompileRE(Module * M, LLVMContext & C, DFSM * dfsm, const std::string & fNa
 	BranchInst::Create(bbmap[0], entryBB);
 
 	BasicBlock * successBB = BasicBlock::Create(C, "success", func);
-	ReturnInst::Create(C, ConstantInt::get(Type::getInt1Ty(C), 1), successBB);
+	Value * retVal = new LoadInst(posPtr, "ret", successBB);
+	ReturnInst::Create(C, retVal, successBB);
 
 	BasicBlock * failureBB = BasicBlock::Create(C, "failure", func);
-	ReturnInst::Create(C, ConstantInt::get(Type::getInt1Ty(C), 0), failureBB);
+	ReturnInst::Create(C, ConstantInt::get(Type::getInt32Ty(C), 0), failureBB);
 
 	for (DFSM::const_iterator state = dfsm->begin(); state != dfsm->end(); ++state)
 	{
-//		{
-//			std::vector<Value*> args;
-//			args.push_back(ConstantInt::get(Type::getInt32Ty(C), state->first / 100 % 10 + '0'));
-//			CallInst::Create(fPuts, args.begin(), args.end(), "", bbmap[state->first]);
-//		}
-//		{
-//			std::vector<Value*> args;
-//			args.push_back(ConstantInt::get(Type::getInt32Ty(C), state->first / 10 % 10 + '0'));
-//			CallInst::Create(fPuts, args.begin(), args.end(), "", bbmap[state->first]);
-//		}
-//		{
-//			std::vector<Value*> args;
-//			args.push_back(ConstantInt::get(Type::getInt32Ty(C), state->first % 10 + '0'));
-//			CallInst::Create(fPuts, args.begin(), args.end(), "", bbmap[state->first]);
-//		}
-//		{
-//			std::vector<Value*> args;
-//			args.push_back(ConstantInt::get(Type::getInt32Ty(C), '\n'));
-//			CallInst::Create(fPuts, args.begin(), args.end(), "", bbmap[state->first]);
-//		}
-
 		Value * pos = new LoadInst(posPtr, "pos", bbmap[state->first]);
-		Value * cPtr = GetElementPtrInst::Create(str, pos, "valPtr", bbmap[state->first]);
-		Value * cVal = new LoadInst(cPtr, "val", bbmap[state->first]);
-		Value * nPos = BinaryOperator::Create(Instruction::Add, pos, ConstantInt::get(Type::getInt32Ty(C), 1), "nPos", bbmap[state->first]);
-		new StoreInst(nPos, posPtr, bbmap[state->first]);
+		if (state->first != 0)
+		{
+			pos = BinaryOperator::Create(Instruction::Add, pos, ConstantInt::get(Type::getInt32Ty(C), 1), "pos", bbmap[state->first]);
+			new StoreInst(pos, posPtr, bbmap[state->first]);
+		}
+
+		Value * cPtr = GetElementPtrInst::Create(str, pos, "charPtr", bbmap[state->first]);
+		Value * cVal = new LoadInst(cPtr, "char", bbmap[state->first]);
 
 		BasicBlock * defBB = failureBB;
 		BasicBlock * prevDefBB = 0;
@@ -93,4 +76,6 @@ void CompileRE(Module * M, LLVMContext & C, DFSM * dfsm, const std::string & fNa
 		if (state->second->transitions.find(-1) != state->second->transitions.end())
 			sw->addCase(ConstantInt::get(Type::getInt8Ty(C), 0), prevDefBB);
 	}
+
+	return func;
 }

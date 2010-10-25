@@ -58,7 +58,7 @@ public:
 	{
 		IState * first = _r1->stateify(start, success, replaceFinal, helper);
 		IState * second = _r2->stateify(start, success, replaceFinal, helper);
-		return new StateReplicator(first, second);
+		return new StateReplicator(first, second, helper);
 	}
 
 	virtual void disp(std::ostream & os, unsigned int nSpace) const

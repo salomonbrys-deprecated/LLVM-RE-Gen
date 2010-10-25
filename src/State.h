@@ -8,25 +8,35 @@
 #ifndef STATE_H_
 #define STATE_H_
 
+#include <queue>
 #include <map>
 #include <set>
 
 struct IState;
 struct State;
+struct StateReplicator;
 struct DState;
 
+typedef std::queue<StateReplicator*> ReplicatorQueue;
 typedef std::map<int, State*> StateMap;
 typedef std::multimap<int, IState*> StateTransitions;
 
-typedef std::pair<int, StateMap> StateHelper;
+//typedef std::pair<int, StateMap> StateHelper;
+struct StateHelper
+{
+	StateHelper() : nextName(0) {}
+	int nextName;
+	StateMap map;
+	ReplicatorQueue queue;
 
-typedef std::map<int, DState*> DFSM; // = Determinist Finite State Machine
+	void clear();
+};
+
 typedef std::map<int, int> DStateTransitions;
 
 struct IState
 {
 	virtual ~IState() {}
-
 	virtual void Final(bool) = 0;
 	virtual bool Final(void) const = 0;
 	virtual const StateTransitions & Transitions(void) const = 0;
@@ -36,8 +46,8 @@ struct IState
 
 struct State : public IState
 {
-	State(StateHelper & helper) : _helper(helper), _name(helper.first), _final(true) { ++helper.first; helper.second.insert(StateMap::value_type(_name, this)); }
-	virtual ~State() { _helper.second.erase(_name); }
+	State(StateHelper & helper) : _helper(helper), _name(helper.nextName), _final(true) { ++helper.nextName; helper.map.insert(StateMap::value_type(_name, this)); }
+	virtual ~State() { _helper.map.erase(_name); }
 
 	virtual void Final(bool is) { _final = is; }
 	virtual bool Final(void) const { return _final; }
@@ -58,7 +68,7 @@ private:
 
 struct StateReplicator : public IState
 {
-	StateReplicator(IState * orig, IState * copy) : _orig(orig), _copy(copy) {}
+	StateReplicator(IState * orig, IState * copy, StateHelper & helper) : _orig(orig), _copy(copy) { helper.queue.push(this); }
 	virtual ~StateReplicator() {}
 
 	virtual void Final(bool is) { _orig->Final(is); _copy->Final(is); }
@@ -80,6 +90,22 @@ struct DState
 	DStateTransitions transitions;
 	bool final;
 };
+
+struct DFSM : public std::map<int, DState*> // = Determinist Finite State Machine
+{
+	void clearStates()
+	{
+		for (DFSM::iterator it = begin(); it != end(); )
+		{
+			DState * state = it->second;
+			DFSM::iterator stateIt = it;
+			++it;
+			erase(stateIt);
+			delete state;
+		}
+	}
+};
+
 void determine(StateMap, DFSM &);
 void reduce(DFSM &);
 

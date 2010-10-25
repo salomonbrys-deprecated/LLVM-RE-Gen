@@ -1,13 +1,29 @@
-/*
- * DState.cpp
- *
- *  Created on: Oct 18, 2010
- *      Author: salomon
- */
+//============================================================================
+// Name        : State.cpp
+// Author      : Salomon BRYS
+// Copyright   : Salomon BRYS, Apache Lisence
+//============================================================================
 
 #include "State.h"
 
 #include <queue>
+
+void StateHelper::clear()
+{
+	for (StateMap::iterator it = map.begin(); it != map.end(); )
+	{
+		State * state = it->second;
+		++it;
+		delete state;
+	}
+
+	while (!queue.empty())
+	{
+		delete queue.front();
+		queue.pop();
+	}
+}
+
 
 void determine(StateMap ndStateList, DFSM & dfsm)
 {
@@ -27,15 +43,9 @@ void determine(StateMap ndStateList, DFSM & dfsm)
 		DState *dstate = new DState;
 		dstate->final = false;
 
-		//std::cout << "D-STATE " << connections[toDo.front()] << std::endl;
-
-		//std::cout << "  ND-STATEs: ";
-
 		DStateSet involved;
 		for (DStateSet::const_iterator stId = toDo.front().begin(); stId != toDo.front().end(); ++stId)
 		{
-			//std::cout << *stId << ' ';
-
 			if (ndStateList[*stId]->Final())
 				dstate->final = true;
 
@@ -43,14 +53,8 @@ void determine(StateMap ndStateList, DFSM & dfsm)
 				involved.insert(tr->first);
 		}
 
-		//std::cout << (dstate->final ? " (F)" : "") << std::endl;
-
-		//std::cout << "  CHARs" << std::endl;
-
 		for (DStateSet::const_iterator chars = involved.begin(); chars != involved.end(); ++chars)
 		{
-			//std::cout << std::setw(7) << *chars << ':' << (isgraph(*chars) ? (char)*chars : ' ');
-
 			DStateSet nextState;
 			for (DStateSet::const_iterator stId = toDo.front().begin(); stId != toDo.front().end(); ++stId)
 			{
@@ -75,8 +79,6 @@ void determine(StateMap ndStateList, DFSM & dfsm)
 
 			if (dstate->transitions.find(-1) == dstate->transitions.end() || dstate->transitions.find(-1)->second != nextStateId)
 				dstate->transitions[*chars] = nextStateId;
-
-			//std::cout << " -> " << nextStateId << std::endl;
 		}
 
 		dfsm[connections[toDo.front()]] = dstate;
@@ -90,7 +92,6 @@ void reduce(DFSM & dfsm)
 	bool cont = true;
 	while (cont)
 	{
-//		std::cout << "REDUCE ITERATION" << std::endl;
 		cont = false;
 		for (DFSM::iterator i = dfsm.begin(); i != dfsm.end(); ++i)
 		{
@@ -104,14 +105,12 @@ void reduce(DFSM & dfsm)
 			++j;
 			while (j != dfsm.end())
 			{
-//				std::cout << "testing " << i->first << " and " << j->first << std::endl;
 				DStateTransitions jTransitions = j->second->transitions;
 				for (DStateTransitions::iterator tr = jTransitions.begin(); tr != jTransitions.end(); ++tr)
 					if (tr->second == j->first)
 						tr->second = -2;
 				if (j->second->final == i->second->final && (jTransitions == iTransitions || j->second->transitions == i->second->transitions ))
 				{
-//					std::cout << "SAME: " << i->first << ", " << j->first << std::endl;
 					for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st)
 					{
 						for (DStateTransitions::iterator tr = st->second->transitions.begin(); tr != st->second->transitions.end(); ++tr)
@@ -123,6 +122,7 @@ void reduce(DFSM & dfsm)
 					}
 					DFSM::iterator erase = j;
 					++j;
+					delete erase->second;
 					dfsm.erase(erase);
 				}
 				else
