@@ -1,6 +1,4 @@
 
-add_executable ( Test_C TestMain.c )
-
 include_directories ( ../../src/ )
 
 if ( WIN32 )
@@ -9,5 +7,7 @@ if ( WIN32 )
 		-DLLVMRE_USE_WINDLL
 	)
 endif ()
+
+add_executable ( Test_C TestMain.c )
 
 target_link_libraries ( Test_C LLVMREGen )

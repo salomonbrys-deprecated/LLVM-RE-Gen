@@ -1,12 +1,4 @@
 
-file (
-	GLOB_RECURSE
-	source_files
-	*
-)
-
-add_executable ( llvm-regexp ${source_files} )
-
 include_directories ( ../src/ tclap/ )
 
 add_definitions (
@@ -22,13 +14,26 @@ if ( WIN32 )
 	)
 endif ()
 
-set (
-	CMAKE_CXX_FLAGS
-	"${CMAKE_CXX_FLAGS} -W -Wall -Wno-unused-parameter"
+if ( NOT MSVC )
+	set (
+		CMAKE_CXX_FLAGS
+		"${CMAKE_CXX_FLAGS} -W -Wall -Wno-unused-parameter"
+	)
+else ()
+	set (
+		CMAKE_CXX_FLAGS
+		"${CMAKE_CXX_FLAGS} /wd4146 /D_CRT_SECURE_NO_WARNINGS /D_SCL_SECURE_NO_WARNINGS"
+	)
+endif ()
+
+file (
+	GLOB_RECURSE
+	source_files
+	*
 )
 
-include_directories ( ${LLVM_ROOT}/include )
-link_directories ( ${LLVM_ROOT}/lib )
+add_executable ( llvm-regexp ${source_files} )
+
 llvm_map_components_to_libraries ( REQ_LLVM_LIBRARIES core bitwriter )
 
 target_link_libraries ( llvm-regexp ${REQ_LLVM_LIBRARIES} LLVMREGen )
