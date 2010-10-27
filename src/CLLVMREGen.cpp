@@ -111,7 +111,11 @@ int CLLVMREFunc::operator () (const char *str)
 void CLLVMREFunc::JITFunc()
 {
 	if (!jit)
-		jit = (REFunc)E->getPointerToFunction(func);
+	{
+		union { void * obj; REFunc func; } u;
+		u.obj = E->getPointerToFunction(func);
+		jit = u.func;
+    }
 }
 
 llvm::Function * CLLVMREFunc::getLLVMFunction()

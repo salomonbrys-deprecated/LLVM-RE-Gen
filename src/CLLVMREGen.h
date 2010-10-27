@@ -56,7 +56,7 @@ private:
 
 	llvm::Function * func;
 
-	int (*jit)(const char *);
+	REFunc jit;
 
 	static llvm::ExecutionEngine * E;
 
