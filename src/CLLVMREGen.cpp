@@ -19,6 +19,7 @@
 #include <llvm/Target/TargetSelect.h>
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 
 llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fName);
@@ -66,7 +67,9 @@ LLVMREFunc & CLLVMRE::createRE(const std::string regexp, int optimizationLevel /
 	reduce(dfsm);
 
 	// Compiling the state machine into LLVM
-	llvm::Function * func = CompileRE(M, &dfsm, "re1");
+	std::stringstream sstr;
+	sstr << "llvmre_" << ++nextFuncId;
+	llvm::Function * func = CompileRE(M, &dfsm, sstr.str());
 	
 	// Deleting the determinist finite state machine
 	dfsm.clearStates();
@@ -84,7 +87,13 @@ LLVMREFunc & CLLVMRE::createRE(const std::string regexp, int optimizationLevel /
 
 	CLLVMREFunc * reFunc = new CLLVMREFunc(func);
 	funcMap[regexp] = reFunc;
+
 	return *reFunc;
+}
+
+void CLLVMRE::WriteBitcodeToFile(llvm::raw_ostream * os) const
+{
+	llvm::WriteBitcodeToFile(M, *os);
 }
 
 CLLVMRE & CLLVMRE::Instance()
@@ -94,7 +103,7 @@ CLLVMRE & CLLVMRE::Instance()
 	return *instance;
 }
 
-CLLVMRE::CLLVMRE()
+CLLVMRE::CLLVMRE() : nextFuncId(0)
 {
 	C = new llvm::LLVMContext;
 	M = new llvm::Module("LLVMRegExp", *C);
@@ -127,6 +136,11 @@ CLLVMREFunc::REFunc CLLVMREFunc::getREFunc()
 {
 	JITFunc();
 	return jit;
+}
+
+std::string CLLVMREFunc::getName() const
+{
+	return func->getNameStr();
 }
 
 

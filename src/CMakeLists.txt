@@ -26,7 +26,7 @@ endif ()
 
 set (
 	CMAKE_CXX_FLAGS
-	"${CMAKE_CXX_FLAGS} -Wno-unused-parameter -W -Wall"
+	"${CMAKE_CXX_FLAGS} -W -Wall -Wno-unused-parameter"
 )
 
 include_directories ( ${LLVM_ROOT}/include )
@@ -41,5 +41,9 @@ endif ()
 
 install (
 	TARGETS LLVMREGen
-	LIBRARY DESTINATION lib
+	DESTINATION lib
+)
+install (
+	FILES LLVMREGen-c.h  LLVMREGen-c-llvm.h  LLVMREGen.h
+	DESTINATION include
 )

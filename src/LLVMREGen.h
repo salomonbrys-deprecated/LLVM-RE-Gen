@@ -19,6 +19,8 @@
 namespace llvm
 {
 	class Function;
+	class Module;
+	class raw_ostream;
 }
 
 class LLVMREFunc;
@@ -28,6 +30,7 @@ class LLVMRE
 public:
 	virtual ~LLVMRE() {};
 	virtual LLVMREFunc & createRE(const std::string regexp, int optimizationLevel = 0) = 0;
+	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const = 0;
 };
 
 class LLVMREFunc
@@ -40,6 +43,7 @@ public:
 	virtual llvm::Function * getLLVMFunction() = 0;
 	typedef int (*REFunc)(const char *);
 	virtual REFunc getREFunc() = 0;
+	virtual std::string getName() const = 0;
 };
 
 extern "C"

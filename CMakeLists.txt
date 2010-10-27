@@ -16,6 +16,8 @@ include ( LLVM )
 
 add_subdirectory ( src )
 
+add_subdirectory ( Comp )
+
 option (
 	BUILD_TESTS
 	"Build VERY simple test, just to ensure that the library links"

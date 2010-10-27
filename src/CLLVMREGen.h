@@ -11,6 +11,7 @@
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/Support/raw_ostream.h>
 
 typedef std::queue<llvm::Function*> FunctionQueue;
 
@@ -21,6 +22,7 @@ class CLLVMRE : public LLVMRE
 public:
 	virtual ~CLLVMRE();
 	virtual LLVMREFunc & createRE(const std::string regexp, int optimizationLevel = 0);
+	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const;
 
 	static CLLVMRE & Instance();
 
@@ -36,6 +38,8 @@ private:
 	FuncMap funcMap;
 	static CLLVMRE *instance;
 
+	int nextFuncId;
+
 	friend class CLLVMREFunc;
 };
 
@@ -48,6 +52,7 @@ public:
 
 	virtual llvm::Function * getLLVMFunction();
 	virtual REFunc getREFunc();
+	virtual std::string getName() const;
 
 	static void initializeJIT();
 
