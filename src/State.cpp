@@ -25,7 +25,7 @@ void StateHelper::clear()
 }
 
 
-void determine(StateMap ndStateList, DFSM & dfsm)
+void determine(StateMap & ndStateList, DFSM & dfsm)
 {
 	typedef std::set<int> DStateSet;
 	typedef std::map<DStateSet, int> ConnectionsMap;

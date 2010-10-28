@@ -28,7 +28,7 @@ class LLVMREFunc;
 class LLVMRE
 {
 public:
-	virtual ~LLVMRE() {};
+	virtual ~LLVMRE() {}
 	virtual LLVMREFunc & createRE(const std::string regexp, int optimizationLevel = 0) = 0;
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const = 0;
 };

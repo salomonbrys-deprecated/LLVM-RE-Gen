@@ -106,7 +106,7 @@ struct DFSM : public std::map<int, DState*> // = Determinist Finite State Machin
 	}
 };
 
-void determine(StateMap, DFSM &);
+void determine(StateMap &, DFSM &);
 void reduce(DFSM &);
 
 #endif /* STATE_H_ */

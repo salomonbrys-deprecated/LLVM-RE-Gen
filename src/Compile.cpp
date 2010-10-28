@@ -22,13 +22,15 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 {
 	LLVMContext & C = M->getContext();
 
+//	Function * fPutchar = cast<Function>(M->getOrInsertFunction("putchar", Type::getInt32Ty(C), Type::getInt32Ty(C), (Type *)0));
+	
 	Function * func = cast<Function>(M->getOrInsertFunction(fName, Type::getInt32Ty(C), Type::getInt8PtrTy(C), (Type *)0));
 	Argument * str = func->arg_begin();
 	str->setName("str");
 
 	BasicBlock * entryBB = BasicBlock::Create(C, "entry", func);
 	Value * posPtr = new AllocaInst(Type::getInt32Ty(C), "posPtr", entryBB);
-	new StoreInst(ConstantInt::get(Type::getInt32Ty(C), 0), posPtr, entryBB);
+	new StoreInst(ConstantInt::get(Type::getInt32Ty(C), -1), posPtr, entryBB);
 
 	std::map<int, BasicBlock*> bbmap;
 
@@ -49,12 +51,15 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 
 	for (DFSM::const_iterator state = dfsm->begin(); state != dfsm->end(); ++state)
 	{
+//		{
+//			std::vector<Value*> arg;
+//			arg.push_back(ConstantInt::get(Type::getInt32Ty(C), state->first + '0'));
+//			CallInst::Create(fPutchar, arg.begin(), arg.end(), "", bbmap[state->first]);
+//		}
+
 		Value * pos = new LoadInst(posPtr, "pos", bbmap[state->first]);
-		if (state->first != 0)
-		{
-			pos = BinaryOperator::Create(Instruction::Add, pos, ConstantInt::get(Type::getInt32Ty(C), 1), "pos", bbmap[state->first]);
-			new StoreInst(pos, posPtr, bbmap[state->first]);
-		}
+		pos = BinaryOperator::Create(Instruction::Add, pos, ConstantInt::get(Type::getInt32Ty(C), 1), "pos", bbmap[state->first]);
+		new StoreInst(pos, posPtr, bbmap[state->first]);
 
 		Value * cPtr = GetElementPtrInst::Create(str, pos, "charPtr", bbmap[state->first]);
 		Value * cVal = new LoadInst(cPtr, "char", bbmap[state->first]);
@@ -72,7 +77,8 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 
 		SwitchInst * sw = SwitchInst::Create(cVal, defBB, nbSw, bbmap[state->first]);
 		for (DStateTransitions::const_iterator tr = state->second->transitions.begin(); tr != state->second->transitions.end(); ++tr)
-			sw->addCase(ConstantInt::get(Type::getInt8Ty(C), tr->first), bbmap[tr->second]);
+			if (tr->first != -1)
+				sw->addCase(ConstantInt::get(Type::getInt8Ty(C), tr->first), bbmap[tr->second]);
 		if (state->second->transitions.find(-1) != state->second->transitions.end())
 			sw->addCase(ConstantInt::get(Type::getInt8Ty(C), 0), prevDefBB);
 	}
