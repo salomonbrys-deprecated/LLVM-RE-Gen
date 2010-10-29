@@ -111,7 +111,17 @@ int CLLVMREFunc::operator () (const char *str)
 {
 	if (!E)
 		initializeJIT();
-	JITFunc();
+	if (!jit)
+		JITFunc();
+	return jit(str);
+}
+
+int CLLVMREFunc::operator () (const char *str) const
+{
+	if (!E)
+		return -1;
+	if (!jit)
+		return -1;
 	return jit(str);
 }
 

@@ -48,6 +48,7 @@ class CLLVMREFunc : public LLVMREFunc
 public:
 	virtual ~CLLVMREFunc();
 	virtual int operator () (const char *str);
+	virtual int operator () (const char *str) const;
 	virtual void JITFunc();
 
 	virtual llvm::Function * getLLVMFunction();
