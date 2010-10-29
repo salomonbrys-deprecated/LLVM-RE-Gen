@@ -30,6 +30,6 @@ inline std::ostream & operator << (std::ostream & os, const INode & node)
 	return os;
 }
 
-INode * parseRegExp(std::string::const_iterator c, std::string::const_iterator end);
+INode * parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end);
 
 #endif /* INODE_H_ */

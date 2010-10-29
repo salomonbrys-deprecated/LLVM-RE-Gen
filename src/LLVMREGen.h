@@ -29,7 +29,7 @@ class LLVMRE
 {
 public:
 	virtual ~LLVMRE() {}
-	virtual LLVMREFunc & createRE(const std::string regexp, int optimizationLevel = 0) = 0;
+	virtual LLVMREFunc & createRE(const std::string & regexp, int optimizationLevel = 0) = 0;
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const = 0;
 };
 
@@ -43,7 +43,9 @@ public:
 	virtual llvm::Function * getLLVMFunction() = 0;
 	typedef int (*REFunc)(const char *);
 	virtual REFunc getREFunc() = 0;
+	virtual REFunc getREFunc() const = 0;
 	virtual std::string getName() const = 0;
+	virtual const std::string & getRegexp() const = 0;
 };
 
 extern "C"

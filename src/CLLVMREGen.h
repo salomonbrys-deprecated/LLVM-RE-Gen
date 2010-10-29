@@ -21,7 +21,7 @@ class CLLVMRE : public LLVMRE
 {
 public:
 	virtual ~CLLVMRE();
-	virtual LLVMREFunc & createRE(const std::string regexp, int optimizationLevel = 0);
+	virtual LLVMREFunc & createRE(const std::string & regexp, int optimizationLevel = 0);
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const;
 
 	static CLLVMRE & Instance();
@@ -52,14 +52,17 @@ public:
 
 	virtual llvm::Function * getLLVMFunction();
 	virtual REFunc getREFunc();
+	virtual REFunc getREFunc() const;
 	virtual std::string getName() const;
+	virtual const std::string & getRegexp() const;
 
 	static void initializeJIT();
 
 private:
-	CLLVMREFunc(llvm::Function * func);
+	CLLVMREFunc(llvm::Function * func, const std::string & regexp);
 
 	llvm::Function * func;
+	std::string regexp;
 
 	REFunc jit;
 

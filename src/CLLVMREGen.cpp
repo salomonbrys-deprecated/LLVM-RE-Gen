@@ -28,7 +28,6 @@ CLLVMRE::~CLLVMRE()
 {
 	for (FuncMap::iterator it = funcMap.begin(); it != funcMap.end(); ++it)
 		delete it->second;
-	funcMap.clear();
 
 	if (CLLVMREFunc::E)
 	{
@@ -40,7 +39,7 @@ CLLVMRE::~CLLVMRE()
 	instance = 0;
 }
 
-LLVMREFunc & CLLVMRE::createRE(const std::string regexp, int optimizationLevel /*= 0*/)
+LLVMREFunc & CLLVMRE::createRE(const std::string & regexp, int optimizationLevel /*= 0*/)
 {
 	if (funcMap.find(regexp) != funcMap.end())
 		return *funcMap.find(regexp)->second;
@@ -51,14 +50,14 @@ LLVMREFunc & CLLVMRE::createRE(const std::string regexp, int optimizationLevel /
 	// Transforming AST into non determinist finite state machine
 	StateHelper helper;
 	new State(helper);
-	n->stateify(helper.map[0], 0, true, helper);
+	n->stateify(helper.states[0], 0, true, helper);
 
 	// Deleting the AST
 	delete n;
 
 	// Determining the finite state machine
 	DFSM dfsm;
-	determine(helper.map, dfsm);
+	determine(helper.states, dfsm);
 
 	// Deleting the non determinist finite state machine
 	helper.clear();
@@ -85,7 +84,7 @@ LLVMREFunc & CLLVMRE::createRE(const std::string regexp, int optimizationLevel /
 
 	queue.push(func);
 
-	CLLVMREFunc * reFunc = new CLLVMREFunc(func);
+	CLLVMREFunc * reFunc = new CLLVMREFunc(func, regexp);
 	funcMap[regexp] = reFunc;
 
 	return *reFunc;
@@ -134,7 +133,15 @@ llvm::Function * CLLVMREFunc::getLLVMFunction()
 
 CLLVMREFunc::REFunc CLLVMREFunc::getREFunc()
 {
-	JITFunc();
+	if (!jit)
+		JITFunc();
+	return jit;
+}
+
+CLLVMREFunc::REFunc CLLVMREFunc::getREFunc() const
+{
+	if (!jit)
+		return 0;
 	return jit;
 }
 
@@ -143,14 +150,19 @@ std::string CLLVMREFunc::getName() const
 	return func->getNameStr();
 }
 
+const std::string & CLLVMREFunc::getRegexp() const
+{
+	return regexp;
+}
+
 
 void CLLVMREFunc::initializeJIT()
 {
 	llvm::InitializeNativeTarget();
-	E = llvm::EngineBuilder(CLLVMRE::Instance().M).create();
+	E = llvm::EngineBuilder(CLLVMRE::instance->M).create();
 }
 
-CLLVMREFunc::CLLVMREFunc(llvm::Function * func) : func(func), jit(0)
+CLLVMREFunc::CLLVMREFunc(llvm::Function * func, const std::string & regexp) : func(func), regexp(regexp), jit(0)
 {
 }
 
@@ -158,6 +170,9 @@ CLLVMREFunc::~CLLVMREFunc()
 {
 	if (E)
 		E->freeMachineCodeForFunction(func);
+	CLLVMRE::FuncMap::iterator it = CLLVMRE::instance->funcMap.find(regexp);
+	if (it != CLLVMRE::instance->funcMap.end())
+		CLLVMRE::instance->funcMap.erase(it);
 }
 
 CLLVMRE * CLLVMRE::instance = 0;

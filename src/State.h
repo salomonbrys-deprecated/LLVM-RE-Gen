@@ -18,15 +18,15 @@ struct StateReplicator;
 struct DState;
 
 typedef std::queue<StateReplicator*> ReplicatorQueue;
-typedef std::map<int, State*> StateMap;
+//typedef std::map<int, State*> StateMap;
+typedef std::vector<State*> StateVector;
 typedef std::multimap<int, IState*> StateTransitions;
 
 //typedef std::pair<int, StateMap> StateHelper;
 struct StateHelper
 {
-	StateHelper() : nextName(0) {}
-	int nextName;
-	StateMap map;
+	StateHelper() {}
+	StateVector states;
 	ReplicatorQueue queue;
 
 	void clear();
@@ -46,8 +46,8 @@ struct IState
 
 struct State : public IState
 {
-	State(StateHelper & helper) : _helper(helper), _name(helper.nextName), _final(true) { ++helper.nextName; helper.map.insert(StateMap::value_type(_name, this)); }
-	virtual ~State() { _helper.map.erase(_name); }
+	State(StateHelper & helper) : _helper(helper), _name(helper.states.size()), _final(true) { helper.states.push_back(this); }
+	virtual ~State() { _helper.states[_name] = 0; }
 
 	virtual void Final(bool is) { _final = is; }
 	virtual bool Final(void) const { return _final; }
@@ -106,7 +106,7 @@ struct DFSM : public std::map<int, DState*> // = Determinist Finite State Machin
 	}
 };
 
-void determine(StateMap &, DFSM &);
+void determine(StateVector &, DFSM &);
 void reduce(DFSM &);
 
 #endif /* STATE_H_ */

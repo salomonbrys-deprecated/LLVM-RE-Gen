@@ -14,7 +14,7 @@
 #include <cctype>
 #include <cstdlib>
 
-INode * parseNodeOr (std::string::const_iterator & c, std::string::const_iterator & end, bool isInBracket);
+INode * parseNodeOr (std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket);
 
 INode * getSequence(char start, char end)
 {
@@ -24,7 +24,7 @@ INode * getSequence(char start, char end)
 	return ret;
 }
 
-char getAChar(std::string::const_iterator & c, std::string::const_iterator & end)
+char getAChar(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	if (*c == '\\')
 	{
@@ -78,7 +78,7 @@ char getAChar(std::string::const_iterator & c, std::string::const_iterator & end
 	return *c++;
 }
 
-INode * getAFinal(std::string::const_iterator & c, std::string::const_iterator & end)
+INode * getAFinal(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	if (*c == '.')
 	{
@@ -88,7 +88,7 @@ INode * getAFinal(std::string::const_iterator & c, std::string::const_iterator &
 	return new FinalChar(*c++);
 }
 
-void	addClassToSequence(std::string::const_iterator & c, std::string::const_iterator end, FinalSequence *s)
+void	addClassToSequence(std::string::const_iterator & c, const std::string::const_iterator & end, FinalSequence *s)
 {
 	std::string className;
 	for (;c != end; ++c)
@@ -134,7 +134,7 @@ void	addClassToSequence(std::string::const_iterator & c, std::string::const_iter
 		throw std::string("Unknown character class");
 }
 
-INode * parseCharSequence(std::string::const_iterator & c, std::string::const_iterator end)
+INode * parseCharSequence(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	FinalSequence * ret = 0;
 	if (*c == '^')
@@ -201,7 +201,7 @@ INode * execRepeat(int min, int max, INode* ret, int n = 1)
 	return ret;
 }
 
-INode * parseRepeat(std::string::const_iterator & c, std::string::const_iterator end, INode* ret)
+INode * parseRepeat(std::string::const_iterator & c, const std::string::const_iterator & end, INode* ret)
 {
 	std::string smin, smax;
 
@@ -224,7 +224,7 @@ INode * parseRepeat(std::string::const_iterator & c, std::string::const_iterator
 
 	return execRepeat(min, max, ret);
 }
-INode * parseNodeUnit(std::string::const_iterator & c, std::string::const_iterator end)
+INode * parseNodeUnit(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	INode * ret = 0;
 
@@ -272,7 +272,7 @@ INode * parseNodeUnit(std::string::const_iterator & c, std::string::const_iterat
 	return ret;
 }
 
-INode * parseNodeAnd(std::string::const_iterator & c, std::string::const_iterator & end, bool isInBracket)
+INode * parseNodeAnd(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
 {
 	INode * ret = parseNodeUnit(c, end);
 
@@ -294,7 +294,7 @@ INode * parseNodeAnd(std::string::const_iterator & c, std::string::const_iterato
 	return ret;
 }
 
-INode * parseNodeOr(std::string::const_iterator & c, std::string::const_iterator & end, bool isInBracket)
+INode * parseNodeOr(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
 {
 	INode * ret = parseNodeAnd(c, end, isInBracket);
 	if (c != end && *c == '|')
@@ -307,7 +307,7 @@ INode * parseNodeOr(std::string::const_iterator & c, std::string::const_iterator
 	return ret;
 }
 
-INode * parseRegExp(std::string::const_iterator c, std::string::const_iterator end)
+INode * parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end)
 {
 	return parseNodeOr(c, end, false);
 }
