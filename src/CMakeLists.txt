@@ -25,7 +25,7 @@ else ()
 endif ()
 
 file (
-	GLOB_RECURSE
+	GLOB
 	source_files
 	*
 )
@@ -35,6 +35,10 @@ add_library (
 	SHARED
 	${source_files}
 )
+
+if ( BUILD_TESTS )
+	add_subdirectory ( ../Test/DevelMain ../Test/DevelMain )
+endif ()
 
 llvm_map_components_to_libraries ( REQ_LLVM_LIBRARIES bitwriter core interpreter jit native target )
 
