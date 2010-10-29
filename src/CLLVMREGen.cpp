@@ -18,7 +18,6 @@
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/Target/TargetSelect.h>
 
-#include <iostream>
 #include <sstream>
 #include <iomanip>
 

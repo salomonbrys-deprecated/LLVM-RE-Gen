@@ -10,6 +10,7 @@
 
 #include <queue>
 #include <map>
+#include <vector>
 #include <set>
 
 struct IState;
@@ -18,11 +19,10 @@ struct StateReplicator;
 struct DState;
 
 typedef std::queue<StateReplicator*> ReplicatorQueue;
-//typedef std::map<int, State*> StateMap;
 typedef std::vector<State*> StateVector;
 typedef std::multimap<int, IState*> StateTransitions;
+typedef std::pair<StateTransitions::const_iterator, StateTransitions::const_iterator> ConstStateTransitionsRange;
 
-//typedef std::pair<int, StateMap> StateHelper;
 struct StateHelper
 {
 	StateHelper() {}
@@ -91,18 +91,17 @@ struct DState
 	bool final;
 };
 
-struct DFSM : public std::map<int, DState*> // = Determinist Finite State Machine
+struct DFSM : public std::vector<DState*> // = Determinist Finite State Machine
 {
 	void clearStates()
 	{
-		for (DFSM::iterator it = begin(); it != end(); )
-		{
-			DState * state = it->second;
-			DFSM::iterator stateIt = it;
-			++it;
-			erase(stateIt);
-			delete state;
-		}
+		for (DFSM::iterator it = begin(); it != end(); ++it)
+			if (*it)
+			{
+				delete *it;
+				*it = 0;
+			}
+		clear();
 	}
 };
 

@@ -30,6 +30,10 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 	typedef std::map<DStateSet, int> ConnectionsMap;
 	ConnectionsMap connections;
 	std::queue<DStateSet> toDo;
+	std::vector<ConstStateTransitionsRange> anyRanges(ndStateList.size());
+
+	for (StateVector::iterator state = ndStateList.begin(); state != ndStateList.end(); ++state)
+		anyRanges.push_back((*state)->Transitions().equal_range(-1));
 
 	DStateSet startSet;
 	startSet.insert(0);
@@ -60,13 +64,13 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 			for (DStateSet::const_iterator stId = front.begin(); stId != front.end(); ++stId)
 			{
 				State * state = ndStateList[*stId];
-				std::pair<StateTransitions::const_iterator, StateTransitions::const_iterator> eqr;
+				ConstStateTransitionsRange eqr;
 				eqr = state->Transitions().equal_range(*chars);
 				for (; eqr.first != eqr.second; ++eqr.first)
 					nextState.insert(eqr.first->second->Name());
 				eqr = state->Transitions().equal_range(-1);
-				for (; eqr.first != eqr.second; ++eqr.first)
-					nextState.insert(eqr.first->second->Name());
+				for (StateTransitions::const_iterator anyEqr = anyRanges[*stId].first; anyEqr != anyRanges[*stId].second; ++anyEqr)
+					nextState.insert(anyEqr->second->Name());
 			}
 
 			int nextStateId;
@@ -88,7 +92,8 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 		}
 
 		//dfsm[connections[toDo.front()]] = dstate;
-		dfsm.insert(DFSM::value_type(connections[front], dstate));
+		//dfsm.insert(DFSM::value_type(connections[front], dstate));
+		dfsm.push_back(dstate);
 
 		toDo.pop();
 	}
@@ -97,47 +102,45 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 void reduce(DFSM & dfsm)
 {
 	bool cont = true;
-	std::map<int, DStateTransitions> RecursionTransitions;
+	std::vector<DStateTransitions> RecursionTransitions;
 	while (cont)
 	{
 		cont = false;
 
-		for (DFSM::iterator i = dfsm.begin(); i != dfsm.end(); ++i)
-		{
-			DStateTransitions & rTr = (RecursionTransitions[i->first] = i->second->transitions);
-			for (DStateTransitions::iterator tr = rTr.begin(); tr != rTr.end(); ++tr)
-				if (tr->second == i->first)
-					tr->second = -2;
-		}
-
-		for (DFSM::iterator i = dfsm.begin(); i != dfsm.end(); ++i)
-		{
-			DFSM::iterator j = i;
-
-			DStateTransitions & iRecursTr = RecursionTransitions[i->first];
-
-			++j;
-			while (j != dfsm.end())
+		int index = 0;
+		for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st, ++index)
+			if (*st)
 			{
-				if (j->second->final == i->second->final && (RecursionTransitions[j->first] == iRecursTr || j->second->transitions == i->second->transitions ))
-				{
-					for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st)
-					{
-						for (DStateTransitions::iterator tr = st->second->transitions.begin(); tr != st->second->transitions.end(); ++tr)
-							if (tr->second == j->first)
-							{
-								tr->second = i->first;
-								cont = true;
-							}
-					}
-					DFSM::iterator erase = j;
-					++j;
-					delete erase->second;
-					dfsm.erase(erase);
-				}
-				else
-					++j;
+				RecursionTransitions.push_back((*st)->transitions);
+				for (DStateTransitions::iterator tr = RecursionTransitions[index].begin(); tr != RecursionTransitions[index].end(); ++tr)
+					if (tr->second == index)
+						tr->second = -2;
 			}
-		}
+
+		int masterIndex = 0;
+		for (DFSM::iterator master = dfsm.begin(); master != dfsm.end(); ++master, ++masterIndex)
+			if (*master)
+			{
+				DFSM::iterator slave = master;
+
+				DStateTransitions & masterRecursTr = RecursionTransitions[masterIndex];
+
+
+				int slaveIndex = masterIndex + 1;
+				for (++slave; slave != dfsm.end(); ++slave, ++slaveIndex)
+					if (*slave && (*slave)->final == (*master)->final && (RecursionTransitions[slaveIndex] == masterRecursTr || (*slave)->transitions == (*master)->transitions))
+					{
+						for (DFSM::iterator st = dfsm.begin(); st != dfsm.end(); ++st)
+							if (*st)
+								for (DStateTransitions::iterator tr = (*st)->transitions.begin(); tr != (*st)->transitions.end(); ++tr)
+									if (tr->second == slaveIndex)
+									{
+										tr->second = masterIndex;
+										cont = true;
+									}
+						delete *slave;
+						*slave = 0;
+					}
+			}
 	}
 }

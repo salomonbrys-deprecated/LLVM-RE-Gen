@@ -10,7 +10,7 @@
 
 #include "State.h"
 
-#include <iostream>
+#include <ostream>
 
 class INode
 {

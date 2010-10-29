@@ -8,7 +8,6 @@
 #include "Final.h"
 #include "DualCont.h"
 
-#include <iostream>
 #include <string>
 #include <cstdio>
 #include <cctype>
