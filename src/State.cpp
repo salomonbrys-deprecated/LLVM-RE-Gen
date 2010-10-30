@@ -32,8 +32,11 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 	std::queue<DStateSet> toDo;
 	std::vector<ConstStateTransitionsRange> anyRanges(ndStateList.size());
 
-	for (StateVector::iterator state = ndStateList.begin(); state != ndStateList.end(); ++state)
-		anyRanges.push_back((*state)->Transitions().equal_range(-1));
+	{
+		int stId = 0;
+		for (StateVector::iterator state = ndStateList.begin(); state != ndStateList.end(); ++state, ++stId)
+			anyRanges[stId] = (*state)->Transitions().equal_range(-1);
+	}
 
 	DStateSet startSet;
 	startSet.insert(0);
@@ -68,7 +71,7 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 				eqr = state->Transitions().equal_range(*chars);
 				for (; eqr.first != eqr.second; ++eqr.first)
 					nextState.insert(eqr.first->second->Name());
-				eqr = state->Transitions().equal_range(-1);
+//				eqr = state->Transitions().equal_range(-1);
 				for (StateTransitions::const_iterator anyEqr = anyRanges[*stId].first; anyEqr != anyRanges[*stId].second; ++anyEqr)
 					nextState.insert(anyEqr->second->Name());
 			}
