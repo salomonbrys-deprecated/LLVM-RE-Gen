@@ -23,15 +23,39 @@
 #endif
 
 __LLVMRE_EXTERN_C_BEGIN
-	__LLVMRE_Dll void LLVMRE_Initialization();
-	__LLVMRE_Dll void LLVMRE_Destruct();
-	__LLVMRE_Dll void * LLVMRE_createRE(const char * regexp, int optimizationLevel);
+	enum LLVMRE_Policy
+	{
+		JIT_ALWAYS,
+		JIT_AUTO,
+		JIT_NEVER
+	};
 
-	__LLVMRE_Dll void LLVMREFunc_initializeJIT();
-	__LLVMRE_Dll void LLVMREFunc_Destruct(void * re);
-	__LLVMRE_Dll int LLVMREFunc_Execute(void * re, const char * str);
-	typedef int (*LLVMRECFunc)(const char *);
-	__LLVMRE_Dll LLVMRECFunc LLVMREFunc_getCFunc(void * re);
+	typedef int (*LLVMRECFuncPtr)(const char *);
+	typedef void * LLVMREFunc;
+
+	/* Explicit Initializations */
+	__LLVMRE_Dll void	LLVMRE_Explicit_Initialization();
+	__LLVMRE_Dll void	LLVMREFunc_initializeJITEngine();
+	__LLVMRE_Dll void	LLVMREFunc_initializeInterpEngine();
+
+	/* LLVMRE Bindings */
+	__LLVMRE_Dll void				LLVMRE_Destruction();
+	__LLVMRE_Dll LLVMREFunc			LLVMRE_createRE(const char * regexp, int optimizationLevel);
+	__LLVMRE_Dll void				LLVMRE_WriteBitcodeToFile(int fd);
+	__LLVMRE_Dll enum LLVMRE_Policy	LLVMRE_getDefaultPolicy();
+	__LLVMRE_Dll void				LLVMRE_setDefaultPolicy(enum LLVMRE_Policy p);
+
+	/* LLVMRE::Func Bindings */
+	__LLVMRE_Dll void				LLVMREFunc_Destruct(LLVMREFunc re);
+	__LLVMRE_Dll int				LLVMREFunc_Execute(LLVMREFunc re, const char * str);
+	__LLVMRE_Dll void				LLVMREFunc_JITFunc(LLVMREFunc re);
+	__LLVMRE_Dll LLVMRECFuncPtr		LLVMREFunc_getCFunc(LLVMREFunc re);
+	__LLVMRE_Dll int				LLVMREFunc_isJIT(LLVMREFunc re);
+	__LLVMRE_Dll const char *		LLVMREFunc_getFuncName(LLVMREFunc re);
+	__LLVMRE_Dll const char *		LLVMREFunc_getRegexp(LLVMREFunc re);
+	__LLVMRE_Dll enum LLVMRE_Policy	LLVMREFunc_getPolicy(LLVMREFunc re);
+	__LLVMRE_Dll void				LLVMREFunc_setPolicy(LLVMREFunc re, enum LLVMRE_Policy p);
+
 __LLVMRE_EXTERN_C_END
 
 #endif /* LLVM_RE_GEN_C_H_ */

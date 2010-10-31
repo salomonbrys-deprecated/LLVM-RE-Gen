@@ -33,17 +33,12 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 	Value * retPtr = new AllocaInst(Type::getInt32Ty(C), "retPtr", entryBB);
 	new StoreInst(ConstantInt::get(Type::getInt32Ty(C), 0), retPtr, entryBB);
 
-//	typedef std::map<int, BasicBlock *> BBMap;
-//	BBMap bbmap;
 	std::vector<BasicBlock *> bbmap(dfsm->size() + 1);
 
 	int stateIndex = 0;
 	for (DFSM::const_iterator state = dfsm->begin(); state != dfsm->end(); ++state, ++stateIndex)
 		if (*state)
-		{
-//			bbmap.insert(BBMap::value_type(state->first, BasicBlock::Create(C, "State", func)));
 			bbmap[stateIndex] = BasicBlock::Create(C, "State", func);
-		}
 	BranchInst::Create(bbmap[0], entryBB);
 
 	BasicBlock * endBB = BasicBlock::Create(C, "End", func);
@@ -61,12 +56,12 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 
 //			{
 //				std::vector<Value*> arg;
-//				arg.push_back(ConstantInt::get(Type::getInt32Ty(C), state->first + '0'));
-//				CallInst::Create(fPutchar, arg.begin(), arg.end(), "", bbmap[state->first]);
+//				arg.push_back(ConstantInt::get(Type::getInt32Ty(C), stateIndex + '0'));
+//				CallInst::Create(fPutchar, arg.begin(), arg.end(), "", bb);
 //			}
 
 			Value * pos = new LoadInst(posPtr, "pos", bb);
-			pos = BinaryOperator::Create(Instruction::Add, pos, cst32_1, "pos", bb);
+			pos = BinaryOperator::Create(Instruction::Add, pos, cst32_1, "npos", bb);
 
 			new StoreInst(pos, posPtr, bb);
 			if ((*state)->final)

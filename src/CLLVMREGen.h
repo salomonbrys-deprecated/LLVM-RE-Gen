@@ -13,63 +13,79 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/Support/raw_ostream.h>
 
-typedef std::queue<llvm::Function*> FunctionQueue;
-
-class CLLVMREFunc;
-
 class CLLVMRE : public LLVMRE
 {
 public:
+	class CFunc : public Func
+	{
+	public:
+		virtual ~CFunc();
+
+		virtual int operator () (const char *str);
+		virtual int execute(const char *str);
+		virtual int operator () (const char *str) const;
+		virtual int execute(const char *str) const;
+
+		virtual void JITFunc();
+
+		virtual const llvm::Function * getLLVMFunction() const;
+
+		virtual CFuncPtr getCFunc();
+		virtual CFuncPtr getCFunc() const;
+
+		virtual bool isJIT() const;
+
+		virtual std::string getFuncName() const;
+		virtual const std::string & getRegexp() const;
+
+		virtual Policy getPolicy() const;
+		virtual void setPolicy(Func::Policy);
+
+		static void initializeJITEngine();
+		static void initializeInterpEngine();
+
+	private:
+		CFunc(llvm::Function * func, const std::string & regexp, Policy policy);
+		int interpret(const char * str) const;
+
+		llvm::Function * func;
+		std::string regexp;
+
+		Policy policy;
+		mutable int count;
+		CFuncPtr jit;
+
+		static const int NB_EXEC_AUTO_JIT = 242;
+
+		static llvm::ExecutionEngine * JITEngine;
+		static llvm::ExecutionEngine * InterpEngine;
+
+		friend class CLLVMRE;
+	};
+
+
 	virtual ~CLLVMRE();
-	virtual LLVMREFunc & createRE(const std::string & regexp, int optimizationLevel = 0);
+
+	virtual Func * createRE(const std::string & regexp, int optimizationLevel = 0);
+
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const;
+
+	virtual Func::Policy getDefaultPolicy() const;
+	virtual void setDefaultPolicy(Func::Policy);
 
 	static CLLVMRE & Instance();
 
 private:
 	CLLVMRE();
 
-	FunctionQueue queue;
-
 	llvm::Module * M;
 	llvm::LLVMContext *C;
 
-	typedef std::map<std::string, CLLVMREFunc*> FuncMap;
-	FuncMap funcMap;
+	Func::Policy defaultPolicy;
+
 	static CLLVMRE *instance;
 
 	int nextFuncId;
-
-	friend class CLLVMREFunc;
-};
-
-class CLLVMREFunc : public LLVMREFunc
-{
-public:
-	virtual ~CLLVMREFunc();
-	virtual int operator () (const char *str);
-	virtual int operator () (const char *str) const;
-	virtual void JITFunc();
-
-	virtual llvm::Function * getLLVMFunction();
-	virtual REFunc getREFunc();
-	virtual REFunc getREFunc() const;
-	virtual std::string getName() const;
-	virtual const std::string & getRegexp() const;
-
-	static void initializeJIT();
-
-private:
-	CLLVMREFunc(llvm::Function * func, const std::string & regexp);
-
-	llvm::Function * func;
-	std::string regexp;
-
-	REFunc jit;
-
-	static llvm::ExecutionEngine * E;
-
-	friend class CLLVMRE;
 };
 
 #endif /* C_LLVM_RE_GEN_H_ */

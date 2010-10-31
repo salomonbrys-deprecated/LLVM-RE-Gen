@@ -9,14 +9,16 @@
 
 int main()
 {
-	for (unsigned int i = 0; i < 15; ++i)
-	{
-		LLVMREFunc & func = LLVMRE_Instance().createRE("a*ab?c?.(bb)?.b(cc)?.?", 0);
+	LLVMRE_Instance(); // Explicit initialization
 
-		std::cout << func("acbbdef") << std::endl;
+	LLVMRE::Func * func = LLVMRE_Instance().createRE("a*ab?c?.(bb)?.b(cc)?.?");
 
-		delete &LLVMRE_Instance();
-	}
+	for (unsigned int i = 0; i < 400; ++i)
+		std::cout << func->execute("acbbdef") << ':' << (int)func->isJIT() << ' ';
+
+	delete func;
+	delete &LLVMRE_Instance();
+
 	#if defined(_WIN)
 		system("pause");
 	#endif

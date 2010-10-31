@@ -19,30 +19,156 @@
 #include <llvm/Target/TargetSelect.h>
 
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 
 llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fName);
 
+CLLVMRE::CFunc::~CFunc()
+{
+	if (jit)
+		JITEngine->freeMachineCodeForFunction(func);
+	delete func;
+}
+
+int CLLVMRE::CFunc::operator () (const char *str)
+{
+	return this->execute(str);
+}
+
+int CLLVMRE::CFunc::execute(const char *str)
+{
+	++count;
+
+	if (!jit && (policy == JIT_ALWAYS || (policy == JIT_AUTO && count >= NB_EXEC_AUTO_JIT)))
+		JITFunc();
+
+	if (jit)
+		return jit(str);
+
+	if (!InterpEngine)
+		initializeInterpEngine();
+
+	return interpret(str);
+}
+
+int CLLVMRE::CFunc::operator () (const char *str) const
+{
+	return this->execute(str);
+}
+
+int CLLVMRE::CFunc::execute(const char *str) const
+{
+	++count;
+
+	if (jit)
+		return jit(str);
+	else if (!InterpEngine)
+		return -1;
+
+	return interpret(str);
+}
+
+void CLLVMRE::CFunc::JITFunc()
+{
+	if (!JITEngine)
+		initializeJITEngine();
+
+		union { void * obj; CFuncPtr func; } u;
+		u.obj = JITEngine->getPointerToFunction(func);
+		jit = u.func;
+}
+
+const llvm::Function * CLLVMRE::CFunc::getLLVMFunction() const
+{
+	return func;
+}
+
+LLVMRE::Func::CFuncPtr CLLVMRE::CFunc::getCFunc()
+{
+	if (!jit)
+		JITFunc();
+	return jit;
+}
+
+LLVMRE::Func::CFuncPtr CLLVMRE::CFunc::getCFunc() const
+{
+	return jit;
+}
+
+bool CLLVMRE::CFunc::isJIT() const
+{
+	return jit != 0;
+}
+
+std::string CLLVMRE::CFunc::getFuncName() const
+{
+	return func->getNameStr();
+}
+
+const std::string & CLLVMRE::CFunc::getRegexp() const
+{
+	return regexp;
+}
+
+LLVMRE::Func::Policy CLLVMRE::CFunc::getPolicy() const
+{
+	return policy;
+}
+
+void CLLVMRE::CFunc::setPolicy(LLVMRE::Func::Policy p)
+{
+	policy = p;
+}
+
+void CLLVMRE::CFunc::initializeJITEngine()
+{
+	llvm::InitializeNativeTarget();
+	JITEngine = llvm::ExecutionEngine::create(CLLVMRE::instance->M);
+}
+
+void CLLVMRE::CFunc::initializeInterpEngine()
+{
+	InterpEngine = llvm::ExecutionEngine::create(CLLVMRE::instance->M, true);
+}
+
+CLLVMRE::CFunc::CFunc(llvm::Function * func, const std::string & regexp, Policy policy)
+	: func(func), regexp(regexp), policy(policy), count(0), jit(0)
+{
+}
+
+int CLLVMRE::CFunc::interpret(const char * str) const
+{
+	std::vector<llvm::GenericValue> args(1);
+	llvm::GenericValue a;
+	a.PointerVal = (void*)str;
+	args[0] = a;
+	llvm::GenericValue retgv = InterpEngine->runFunction(func, args);
+	return *retgv.IntVal.getRawData();
+}
+
+
+
+
+
 CLLVMRE::~CLLVMRE()
 {
-	for (FuncMap::iterator it = funcMap.begin(); it != funcMap.end(); ++it)
-		delete it->second;
-
-	if (CLLVMREFunc::E)
+	if (CFunc::JITEngine)
 	{
-		delete CLLVMREFunc::E;
-		CLLVMREFunc::E = 0;
-		//llvm::llvm_shutdown();
+		delete CFunc::JITEngine;
+		CFunc::JITEngine = 0;
+	}
+	if (CFunc::InterpEngine)
+	{
+		delete CFunc::InterpEngine;
+		CFunc::InterpEngine = 0;
 	}
 	delete C;
 	instance = 0;
 }
 
-LLVMREFunc & CLLVMRE::createRE(const std::string & regexp, int optimizationLevel /*= 0*/)
+LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp, int optimizationLevel /*= 0*/)
 {
-	if (funcMap.find(regexp) != funcMap.end())
-		return *funcMap.find(regexp)->second;
-		
 	// Creating the AST
 	INode * n = parseRegExp(regexp.begin(), regexp.end());
 
@@ -81,12 +207,9 @@ LLVMREFunc & CLLVMRE::createRE(const std::string & regexp, int optimizationLevel
 		fpm.run(*func);
 	}
 
-	queue.push(func);
+	CFunc * reFunc = new CFunc(func, regexp, defaultPolicy);
 
-	CLLVMREFunc * reFunc = new CLLVMREFunc(func, regexp);
-	funcMap[regexp] = reFunc;
-
-	return *reFunc;
+	return reFunc;
 }
 
 void CLLVMRE::WriteBitcodeToFile(llvm::raw_ostream * os) const
@@ -101,89 +224,27 @@ CLLVMRE & CLLVMRE::Instance()
 	return *instance;
 }
 
-CLLVMRE::CLLVMRE() : nextFuncId(0)
+LLVMRE::Func::Policy CLLVMRE::getDefaultPolicy() const
+{
+	return defaultPolicy;
+}
+
+void CLLVMRE::setDefaultPolicy(LLVMRE::Func::Policy p)
+{
+	defaultPolicy = p;
+}
+
+CLLVMRE::CLLVMRE() : defaultPolicy(LLVMRE::Func::JIT_AUTO), nextFuncId(0)
 {
 	C = new llvm::LLVMContext;
 	M = new llvm::Module("LLVMRegExp", *C);
 }
 
-int CLLVMREFunc::operator () (const char *str)
-{
-	if (!E)
-		initializeJIT();
-	if (!jit)
-		JITFunc();
-	return jit(str);
-}
-
-int CLLVMREFunc::operator () (const char *str) const
-{
-	if (!E)
-		return -1;
-	if (!jit)
-		return -1;
-	return jit(str);
-}
-
-void CLLVMREFunc::JITFunc()
-{
-	if (!jit)
-	{
-		union { void * obj; REFunc func; } u;
-		u.obj = E->getPointerToFunction(func);
-		jit = u.func;
-    }
-}
-
-llvm::Function * CLLVMREFunc::getLLVMFunction()
-{
-	return func;
-}
-
-CLLVMREFunc::REFunc CLLVMREFunc::getREFunc()
-{
-	if (!jit)
-		JITFunc();
-	return jit;
-}
-
-CLLVMREFunc::REFunc CLLVMREFunc::getREFunc() const
-{
-	if (!jit)
-		return 0;
-	return jit;
-}
-
-std::string CLLVMREFunc::getName() const
-{
-	return func->getNameStr();
-}
-
-const std::string & CLLVMREFunc::getRegexp() const
-{
-	return regexp;
-}
 
 
-void CLLVMREFunc::initializeJIT()
-{
-	llvm::InitializeNativeTarget();
-	E = llvm::EngineBuilder(CLLVMRE::instance->M).create();
-}
 
-CLLVMREFunc::CLLVMREFunc(llvm::Function * func, const std::string & regexp) : func(func), regexp(regexp), jit(0)
-{
-}
-
-CLLVMREFunc::~CLLVMREFunc()
-{
-	if (E)
-		E->freeMachineCodeForFunction(func);
-	CLLVMRE::FuncMap::iterator it = CLLVMRE::instance->funcMap.find(regexp);
-	if (it != CLLVMRE::instance->funcMap.end())
-		CLLVMRE::instance->funcMap.erase(it);
-}
 
 CLLVMRE * CLLVMRE::instance = 0;
-llvm::ExecutionEngine * CLLVMREFunc::E = 0;
+llvm::ExecutionEngine * CLLVMRE::CFunc::JITEngine = 0;
+llvm::ExecutionEngine * CLLVMRE::CFunc::InterpEngine = 0;
 

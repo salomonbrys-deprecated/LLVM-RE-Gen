@@ -46,9 +46,10 @@ int main(int argc, char ** argv)
 
 		for (std::vector<std::string>::const_iterator it = regexp.getValue().begin(); it != regexp.getValue().end(); ++it)
 		{
-			LLVMREFunc & f = LLVMRE_Instance().createRE(*it, optimizationLevel.getValue());
+			LLVMRE::Func * f = LLVMRE_Instance().createRE(*it, optimizationLevel.getValue());
 			if (!outputFile.getValue().empty() && !noPrint.getValue())
-				std::cout << std::setw(10) << f.getName() << ": " << *it << std::endl;
+				std::cout << std::setw(10) << f->getFuncName() << ": " << *it << std::endl;
+			delete f;
 		}
 
 		if (outputFile.getValue().empty())

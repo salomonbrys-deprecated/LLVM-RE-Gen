@@ -1,6 +1,10 @@
 
 #include <iostream>
+#include <sstream>
 #include <string>
+
+#include <cstdlib>
+
 #include "INode.h"
 
 #include <llvm/LLVMContext.h>
@@ -11,40 +15,34 @@
 #include <llvm/Support/StandardPasses.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/ExecutionEngine/Interpreter.h>
-#include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/Target/TargetSelect.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
 
-#define TEST_DISPLAY_INTERMEDIATE
+#include "CLLVMREGen.h"
+
+//#define TEST_DISPLAY_INTERMEDIATE
 
 llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fName);
 
+#include "LLVMREGen.h"
+
 int	main()
 {
-	std::string regexp("a*ab?c?.(bb)?.b(cc)?.?");
+//	CLLVMRE::CFunc * func = (CLLVMRE::CFunc*)CLLVMRE::Instance().createRE("a*ab?c?.(bb)?.b(cc)?.?");
+//	std::cout << func->execute("acbbdef");
+
+	std::string regexp("a*a");
+	llvm::LLVMContext  nC;// = new llvm::LLVMContext;
+	llvm::Module  nM/* = new llvm::Module*/("LLVMRegExp", nC);
+
 	// Creating the AST
 	INode * n = parseRegExp(regexp.begin(), regexp.end());
 
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	std::cout << *n << std::endl;
-	std::cout << std::endl << "1-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-	
 	// Transforming AST into non determinist finite state machine
 	StateHelper helper;
 	new State(helper);
 	n->stateify(helper.states[0], 0, true, helper);
 
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	int stateIndex = 0;
-	for (StateVector::const_iterator state = helper.states.begin(); state != helper.states.end(); ++state, ++stateIndex)
-	{
-		std::cout << "State " << stateIndex << ": " << ((*state)->Final() ? "(F)" : "") << std::endl;
-		for (StateTransitions::const_iterator transition = (*state)->Transitions().begin(); transition != (*state)->Transitions().end(); ++transition)
-			std::cout << "  " << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second->Name() << std::endl;
-	}
-	std::cout << std::endl << "2-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-	
 	// Deleting the AST
 	delete n;
 
@@ -52,66 +50,40 @@ int	main()
 	DFSM dfsm;
 	determine(helper.states, dfsm);
 
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	stateIndex = 0;
-	for (DFSM::const_iterator state = dfsm.begin(); state != dfsm.end(); ++state, ++stateIndex)
-		if (*state)
-		{
-			std::cout << "DState " << stateIndex << ": " << ((*state)->final ? "(F)" : "") << std::endl;
-			for (DStateTransitions::const_iterator transition = (*state)->transitions.begin(); transition != (*state)->transitions.end(); ++transition)
-				std::cout << "  " << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second << std::endl;
-		}
-	std::cout << std::endl << "3-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-
 	// Deleting the non determinist finite state machine
 	helper.clear();
 
 	// Reducing the determinist finite state machine
 	reduce(dfsm);
 
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	stateIndex = 0;
-	for (DFSM::const_iterator state = dfsm.begin(); state != dfsm.end(); ++state, ++stateIndex)
-		if (*state)
-		{
-			std::cout << "DState " << stateIndex << ": " << ((*state)->final ? "(F)" : "") << std::endl;
-			for (DStateTransitions::const_iterator transition = (*state)->transitions.begin(); transition != (*state)->transitions.end(); ++transition)
-				std::cout << "  " << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second << std::endl;
-		}
-	std::cout << std::endl << "4-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-
 	// Compiling the state machine into LLVM
-	llvm::LLVMContext C;
-	llvm::Module M("llvmre", C);
-	llvm::Function * func = CompileRE(&M, &dfsm, "llvmre_devel_test");
-	
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	llvm::outs() << M;
-	std::cout << std::endl << "5-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-	
+	std::stringstream sstr;
+	sstr << "llvmre_" << 1;
+	llvm::Function * func = CompileRE(&nM, &dfsm, sstr.str());
+
+	llvm::outs() << nM;
+
 	// Deleting the determinist finite state machine
 	dfsm.clearStates();
 
 	// Optimising the LLVM Code
-	llvm::FunctionPassManager fpm(&M);
-	llvm::createStandardFunctionPasses(&fpm, 2);
-	fpm.doInitialization();
-	fpm.run(*func);
+	if (0)
+	{
+		llvm::FunctionPassManager fpm(&nM);
+		llvm::createStandardFunctionPasses(&fpm, 2);
+		fpm.doInitialization();
+		fpm.run(*func);
+	}
 
-#ifdef TEST_DISPLAY_INTERMEDIATE
-	llvm::outs() << M;
-	std::cout << std::endl << "6-----------------------------------------------------------" << std::endl << std::endl;
-#endif
-	
+//	CFunc * reFunc = new CFunc(func, regexp, defaultPolicy);
+//	std::cout << reFunc->execute("acbbdef");
+
 	llvm::InitializeNativeTarget();
-	llvm::ExecutionEngine * E  = llvm::EngineBuilder(&M).create();
-	typedef int (*REFunc)(const char *);
-	union { void * obj; REFunc func; } u;
-	u.obj = E->getPointerToFunction(func);
-	REFunc jit = u.func;
-	int ret = jit("acbbdef");
-	std::cout << std::endl << ret << std::endl;
+	llvm::ExecutionEngine * E = llvm::ExecutionEngine::create(&nM);
+	std::vector<llvm::GenericValue> args(1);
+	llvm::GenericValue a((void*)"a");
+	args[0] = a;
+	llvm::GenericValue retgv = E->runFunction(func, args);
+	llvm::outs() << retgv.IntVal;
+
 }

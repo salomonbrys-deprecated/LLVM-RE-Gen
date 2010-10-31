@@ -16,8 +16,11 @@ int main()
 
 		printf("%i\n", LLVMREFunc_Execute(re, "acbbdef"));
 
-		LLVMRE_Destruct();
+		LLVMREFunc_Destruct(re);
 	}
+
+	LLVMRE_Destruction();
+
 	#if defined(_WIN)
 		system("pause");
 	#endif
