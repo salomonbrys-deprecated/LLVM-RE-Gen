@@ -10,28 +10,24 @@ extern "C"
 		return CLLVMRE::Instance();
 	}
 
-	void LLVMREFunc_initializeJITEngine()
+	void LLVMRE_initializeJITEngine(int optimizationLevel)
 	{
-		CLLVMRE::CFunc::initializeJITEngine();
+		CLLVMRE::Instance().initializeJITEngine(optimizationLevel);
 	}
 
-	void LLVMREFunc_initializeInterpEngine()
+	void	LLVMRE_Explicit_Initialization()
 	{
-		CLLVMRE::CFunc::initializeInterpEngine();
+		CLLVMRE::Instance();
 	}
-
-
-
-
 
 	void LLVMRE_Destruction()
 	{
 		delete &CLLVMRE::Instance();
 	}
 
-	void * LLVMRE_createRE(const char * regexp, int optimizationLevel)
+	void * LLVMRE_createRE(const char * regexp)
 	{
-		return (void*)CLLVMRE::Instance().createRE(regexp, optimizationLevel);
+		return (void*)CLLVMRE::Instance().createRE(regexp);
 	}
 
 	void LLVMRE_WriteBitcodeToFile(int fd)
@@ -50,20 +46,59 @@ extern "C"
 		CLLVMRE::Instance().setDefaultPolicy((LLVMRE::Func::Policy)p);
 	}
 
-	void LLVMREFunc_Destruct(void * re)
+	void LLVMREFunc_Destruct(LLVMREFunc re)
 	{
 		delete (CLLVMRE::CFunc*)re;
 	}
 
-	int LLVMREFunc_Execute(void * re, const char * str)
+	int LLVMREFunc_Execute(LLVMREFunc re, const char * str)
 	{
 		return ((CLLVMRE::CFunc*)re)->execute(str);
 	}
 
-	LLVMRECFuncPtr LLVMREFunc_getCFunc(void * re)
+	void LLVMREFunc_JITFunc(LLVMREFunc re, int optimizationLevel /*=0*/)
+	{
+		((CLLVMRE::CFunc*)re)->JITFunc(optimizationLevel);
+	}
+
+	void LLVMREFunc_compileInLLVM(LLVMREFunc re, int optimizationLevel /*=0*/)
+	{
+		((CLLVMRE::CFunc*)re)->compileInLLVM(optimizationLevel);
+	}
+
+	LLVMRECFuncPtr LLVMREFunc_getCFunc(LLVMREFunc re)
 	{
 		return ((CLLVMRE::CFunc*)re)->getCFunc();
 	}
+
+	int LLVMREFunc_isJIT(LLVMREFunc re)
+	{
+		return ((CLLVMRE::CFunc*)re)->isJIT();
+	}
+
+	const char * LLVMREFunc_getFuncName(LLVMREFunc re)
+	{
+		return ((CLLVMRE::CFunc*)re)->getFuncName().c_str();
+	}
+
+	const char * LLVMREFunc_getRegexp(LLVMREFunc re)
+	{
+		return ((CLLVMRE::CFunc*)re)->getRegexp().c_str();
+	}
+
+	enum LLVMRE_Policy	LLVMREFunc_getPolicy(LLVMREFunc re)
+	{
+		return (LLVMRE_Policy)((CLLVMRE::CFunc*)re)->getPolicy();
+	}
+
+	void LLVMREFunc_setPolicy(LLVMREFunc re, enum LLVMRE_Policy p)
+	{
+		((CLLVMRE::CFunc*)re)->setPolicy((LLVMRE::Func::Policy)p);
+	}
+
+
+
+
 
 	LLVMValueRef LLVMREFunc_getLLVMFuncValue(void * re)
 	{

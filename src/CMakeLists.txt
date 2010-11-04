@@ -42,7 +42,7 @@ endif ()
 
 llvm_map_components_to_libraries ( REQ_LLVM_LIBRARIES bitwriter core interpreter jit native target )
 
-target_link_libraries ( LLVMREGen ${REQ_LLVM_LIBRARIES} )
+target_link_libraries ( LLVMREGen ${REQ_LLVM_LIBRARIES} ffi )
 
 if ( UNIX )
 	target_link_libraries ( LLVMREGen dl pthread )

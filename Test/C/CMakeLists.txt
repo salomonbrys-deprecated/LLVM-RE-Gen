@@ -1,5 +1,5 @@
 
-include_directories ( ../../src/ )
+include_directories ( BEFORE ../../src/ )
 
 if ( WIN32 )
 	add_definitions (

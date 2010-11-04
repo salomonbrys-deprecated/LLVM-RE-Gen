@@ -13,7 +13,7 @@ int main()
 
 	LLVMRE::Func * func = LLVMRE_Instance().createRE("a*ab?c?.(bb)?.b(cc)?.?");
 
-	for (unsigned int i = 0; i < 400; ++i)
+	for (unsigned int i = 0; i < 12000; ++i)
 		std::cout << func->execute("acbbdef") << ':' << (int)func->isJIT() << ' ';
 
 	delete func;

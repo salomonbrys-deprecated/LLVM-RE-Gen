@@ -1,5 +1,5 @@
 
-include_directories ( ../../src/ )
+include_directories ( BEFORE ../../src/ )
 
 add_definitions (
 	-D_CXX

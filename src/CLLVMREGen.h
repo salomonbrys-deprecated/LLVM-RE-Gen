@@ -1,8 +1,8 @@
-
 #ifndef C_LLVM_RE_GEN_H_
 #define C_LLVM_RE_GEN_H_
 
 #include "LLVMREGen.h"
+#include "State.h"
 
 #include <string>
 #include <queue>
@@ -13,21 +13,23 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/Support/raw_ostream.h>
 
-class CLLVMRE : public LLVMRE
+class CLLVMRE: public LLVMRE
 {
 public:
-	class CFunc : public Func
+	class CFunc: public Func
 	{
 	public:
 		virtual ~CFunc();
 
-		virtual int operator () (const char *str);
+		virtual int operator ()(const char *str);
 		virtual int execute(const char *str);
-		virtual int operator () (const char *str) const;
+		virtual int operator ()(const char *str) const;
 		virtual int execute(const char *str) const;
 
-		virtual void JITFunc();
+		virtual void JITFunc(int optimizationLevel = 0);
+		virtual void compileInLLVM(int optimizationLevel = 0);
 
+		virtual const llvm::Function * getLLVMFunction();
 		virtual const llvm::Function * getLLVMFunction() const;
 
 		virtual CFuncPtr getCFunc();
@@ -41,13 +43,11 @@ public:
 		virtual Policy getPolicy() const;
 		virtual void setPolicy(Func::Policy);
 
-		static void initializeJITEngine();
-		static void initializeInterpEngine();
-
 	private:
-		CFunc(llvm::Function * func, const std::string & regexp, Policy policy);
+		CFunc(DFSM * dfsm, const std::string & regexp, Policy policy);
 		int interpret(const char * str) const;
 
+		DFSM * dfsm;
 		llvm::Function * func;
 		std::string regexp;
 
@@ -57,21 +57,22 @@ public:
 
 		static const int NB_EXEC_AUTO_JIT = 242;
 
-		static llvm::ExecutionEngine * JITEngine;
-		static llvm::ExecutionEngine * InterpEngine;
+		static int nextFuncId;
 
 		friend class CLLVMRE;
 	};
 
-
 	virtual ~CLLVMRE();
 
-	virtual Func * createRE(const std::string & regexp, int optimizationLevel = 0);
+	virtual Func * createRE(const std::string & regexp);
 
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const;
 
 	virtual Func::Policy getDefaultPolicy() const;
 	virtual void setDefaultPolicy(Func::Policy);
+
+	virtual void initilizeLLVM();
+	virtual void initializeJITEngine(int optimizationLevel = 0);
 
 	static CLLVMRE & Instance();
 
@@ -81,11 +82,11 @@ private:
 	llvm::Module * M;
 	llvm::LLVMContext *C;
 
+	llvm::ExecutionEngine * JITEngine;
+
 	Func::Policy defaultPolicy;
 
 	static CLLVMRE *instance;
-
-	int nextFuncId;
 };
 
 #endif /* C_LLVM_RE_GEN_H_ */

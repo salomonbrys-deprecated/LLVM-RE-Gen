@@ -15,6 +15,8 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include "LLVMREGen.h"
+
 class OptimLevelConstraint : public TCLAP::Constraint<int>
 {
 	public:
@@ -44,12 +46,13 @@ int main(int argc, char ** argv)
 
 		cmd.parse(argc, argv);
 
+		LLVMRE_Instance().initializeJITEngine(3);
 		for (std::vector<std::string>::const_iterator it = regexp.getValue().begin(); it != regexp.getValue().end(); ++it)
 		{
-			LLVMRE::Func * f = LLVMRE_Instance().createRE(*it, optimizationLevel.getValue());
+			LLVMRE::Func * f = LLVMRE_Instance().createRE(*it);
+			f->JITFunc(3);
 			if (!outputFile.getValue().empty() && !noPrint.getValue())
 				std::cout << std::setw(10) << f->getFuncName() << ": " << *it << std::endl;
-			delete f;
 		}
 
 		if (outputFile.getValue().empty())

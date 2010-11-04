@@ -16,6 +16,13 @@
 	#endif
 #endif
 
+#if defined(_WIN)
+#include <windows.h>
+#define int32_t INT32
+#else
+#include <sys/types.h>
+#endif
+
 namespace llvm
 {
 	class Function;
@@ -37,11 +44,13 @@ public:
 		virtual int operator () (const char *str) const = 0;
 		virtual int execute(const char *str) const = 0;
 
-		virtual void JITFunc() = 0;
+		virtual void JITFunc(int optimizationLevel = 0) = 0;
+		virtual void compileInLLVM(int optimizationLevel = 0) = 0;
 
+		virtual const llvm::Function * getLLVMFunction() = 0;
 		virtual const llvm::Function * getLLVMFunction() const = 0;
 
-		typedef int (*CFuncPtr)(const char *);
+		typedef int32_t (*CFuncPtr)(const char *);
 
 		virtual CFuncPtr getCFunc() = 0;
 		virtual CFuncPtr getCFunc() const = 0;
@@ -62,10 +71,12 @@ public:
 		virtual void setPolicy(Func::Policy) = 0;
 	};
 
-
 	virtual ~LLVMRE() {}
 
-	virtual Func * createRE(const std::string & regexp, int optimizationLevel = 0) = 0;
+	virtual Func * createRE(const std::string & regexp) = 0;
+
+	virtual void initilizeLLVM() = 0;
+	virtual void initializeJITEngine(int optimizationLevel = 0) = 0;
 
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const = 0;
 
@@ -76,8 +87,6 @@ public:
 extern "C"
 {
 	__LLVMRE_Dll LLVMRE & LLVMRE_Instance();
-	__LLVMRE_Dll void LLVMREFunc_initializeJITEngine();
-	__LLVMRE_Dll void LLVMREFunc_initializeInterpEngine();
 }
 
 #endif /* LLVM_RE_GEN_H_ */

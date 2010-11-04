@@ -1,5 +1,5 @@
 
-include_directories ( ../src/ tclap/ )
+include_directories ( BEFORE ../src/ tclap/ )
 
 add_definitions (
 	-D__STDC_LIMIT_MACROS

@@ -22,13 +22,16 @@
 #include <iostream>
 #include <iomanip>
 
+#define LLVMREGEN_AUTO_JIT_COUNT 10000
+
 llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fName);
 
 CLLVMRE::CFunc::~CFunc()
 {
-	if (jit)
-		JITEngine->freeMachineCodeForFunction(func);
-	delete func;
+	if (jit && func)
+		CLLVMRE::instance->JITEngine->freeMachineCodeForFunction(func);
+
+	delete dfsm;
 }
 
 int CLLVMRE::CFunc::operator () (const char *str)
@@ -38,16 +41,17 @@ int CLLVMRE::CFunc::operator () (const char *str)
 
 int CLLVMRE::CFunc::execute(const char *str)
 {
-	++count;
+	if (!jit)
+	{
+		if (policy == JIT_AUTO)
+			++count;
 
-	if (!jit && (policy == JIT_ALWAYS || (policy == JIT_AUTO && count >= NB_EXEC_AUTO_JIT)))
-		JITFunc();
+		if (policy == JIT_ALWAYS || (policy == JIT_AUTO && count >= NB_EXEC_AUTO_JIT))
+			JITFunc();
+	}
 
 	if (jit)
 		return jit(str);
-
-	if (!InterpEngine)
-		initializeInterpEngine();
 
 	return interpret(str);
 }
@@ -59,24 +63,56 @@ int CLLVMRE::CFunc::operator () (const char *str) const
 
 int CLLVMRE::CFunc::execute(const char *str) const
 {
-	++count;
-
 	if (jit)
 		return jit(str);
-	else if (!InterpEngine)
-		return -1;
+
+	if (policy == JIT_AUTO && count < LLVMREGEN_AUTO_JIT_COUNT)
+		++count;
 
 	return interpret(str);
 }
 
-void CLLVMRE::CFunc::JITFunc()
+void CLLVMRE::CFunc::JITFunc(int optimizationLevel /*= 0*/)
 {
-	if (!JITEngine)
-		initializeJITEngine();
+	if (jit)
+		return ;
 
-		union { void * obj; CFuncPtr func; } u;
-		u.obj = JITEngine->getPointerToFunction(func);
-		jit = u.func;
+	if (!CLLVMRE::instance->JITEngine)
+		CLLVMRE::instance->initializeJITEngine();
+
+	if (!func)
+		compileInLLVM(optimizationLevel);
+
+	union { void * obj; CFuncPtr func; } u;
+	u.obj = CLLVMRE::instance->JITEngine->getPointerToFunction(func);
+	jit = u.func;
+}
+
+void CLLVMRE::CFunc::compileInLLVM(int optimizationLevel /*= 0*/)
+{
+	if (!CLLVMRE::instance->M)
+		CLLVMRE::instance->initilizeLLVM();
+
+	std::stringstream sstr;
+	sstr << "llvmre_" << ++nextFuncId;
+	func = CompileRE(CLLVMRE::instance->M, dfsm, sstr.str());
+
+	// Optimising the LLVM Code
+	if (optimizationLevel)
+	{
+		llvm::FunctionPassManager fpm(CLLVMRE::instance->M);
+		llvm::createStandardFunctionPasses(&fpm, optimizationLevel);
+		fpm.doInitialization();
+		fpm.run(*func);
+	}
+}
+
+const llvm::Function * CLLVMRE::CFunc::getLLVMFunction()
+{
+	if (!func)
+		compileInLLVM();
+
+	return func;
 }
 
 const llvm::Function * CLLVMRE::CFunc::getLLVMFunction() const
@@ -121,30 +157,42 @@ void CLLVMRE::CFunc::setPolicy(LLVMRE::Func::Policy p)
 	policy = p;
 }
 
-void CLLVMRE::CFunc::initializeJITEngine()
-{
-	llvm::InitializeNativeTarget();
-	JITEngine = llvm::ExecutionEngine::create(CLLVMRE::instance->M);
-}
-
-void CLLVMRE::CFunc::initializeInterpEngine()
-{
-	InterpEngine = llvm::ExecutionEngine::create(CLLVMRE::instance->M, true);
-}
-
-CLLVMRE::CFunc::CFunc(llvm::Function * func, const std::string & regexp, Policy policy)
-	: func(func), regexp(regexp), policy(policy), count(0), jit(0)
+CLLVMRE::CFunc::CFunc(DFSM * dfsm, const std::string & regexp, Policy policy)
+	: dfsm(dfsm), func(0), regexp(regexp), policy(policy), count(0), jit(0)
 {
 }
 
 int CLLVMRE::CFunc::interpret(const char * str) const
 {
-	std::vector<llvm::GenericValue> args(1);
-	llvm::GenericValue a;
-	a.PointerVal = (void*)str;
-	args[0] = a;
-	llvm::GenericValue retgv = InterpEngine->runFunction(func, args);
-	return *retgv.IntVal.getRawData();
+	int pos = -1;
+	int ret = 0;
+
+	DState * state = (*dfsm)[0];
+
+	for (;;)
+	{
+		++pos;
+
+		if (state->final)
+			ret = pos;
+
+		if (str[pos] == '\0')
+			break ;
+
+		DStateTransitions::const_iterator tr = state->transitions.find(str[pos]);
+		if (tr != state->transitions.end())
+			state = (*dfsm)[tr->second];
+		else
+		{
+			DStateTransitions::const_iterator any = state->transitions.find(-1);
+			if (any != state->transitions.end())
+				state = (*dfsm)[any->second];
+			else
+				break ;
+		}
+	}
+
+	return ret;
 }
 
 
@@ -153,21 +201,19 @@ int CLLVMRE::CFunc::interpret(const char * str) const
 
 CLLVMRE::~CLLVMRE()
 {
-	if (CFunc::JITEngine)
+	if (JITEngine)
 	{
-		delete CFunc::JITEngine;
-		CFunc::JITEngine = 0;
+		delete JITEngine;
+		JITEngine = 0;
 	}
-	if (CFunc::InterpEngine)
-	{
-		delete CFunc::InterpEngine;
-		CFunc::InterpEngine = 0;
-	}
-	delete C;
+
+	if (C)
+		delete C;
+
 	instance = 0;
 }
 
-LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp, int optimizationLevel /*= 0*/)
+LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp)
 {
 	// Creating the AST
 	INode * n = parseRegExp(regexp.begin(), regexp.end());
@@ -181,47 +227,21 @@ LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp, int optimizationLev
 	delete n;
 
 	// Determining the finite state machine
-	DFSM dfsm;
-	determine(helper.states, dfsm);
+	DFSM * dfsm = new DFSM;
+	determine(helper.states, *dfsm);
 
 	// Deleting the non determinist finite state machine
 	helper.clear();
 
 	// Reducing the determinist finite state machine
-	reduce(dfsm);
+	reduce(*dfsm);
 
-	// Compiling the state machine into LLVM
-	std::stringstream sstr;
-	sstr << "llvmre_" << ++nextFuncId;
-	llvm::Function * func = CompileRE(M, &dfsm, sstr.str());
-	
-	// Deleting the determinist finite state machine
-	dfsm.clearStates();
-
-	// Optimising the LLVM Code
-	if (optimizationLevel)
-	{
-		llvm::FunctionPassManager fpm(M);
-		llvm::createStandardFunctionPasses(&fpm, optimizationLevel);
-		fpm.doInitialization();
-		fpm.run(*func);
-	}
-
-	CFunc * reFunc = new CFunc(func, regexp, defaultPolicy);
-
-	return reFunc;
+	return new CFunc(dfsm, regexp, defaultPolicy);
 }
 
 void CLLVMRE::WriteBitcodeToFile(llvm::raw_ostream * os) const
 {
 	llvm::WriteBitcodeToFile(M, *os);
-}
-
-CLLVMRE & CLLVMRE::Instance()
-{
-	if (!instance)
-		instance = new CLLVMRE();
-	return *instance;
 }
 
 LLVMRE::Func::Policy CLLVMRE::getDefaultPolicy() const
@@ -234,10 +254,48 @@ void CLLVMRE::setDefaultPolicy(LLVMRE::Func::Policy p)
 	defaultPolicy = p;
 }
 
-CLLVMRE::CLLVMRE() : defaultPolicy(LLVMRE::Func::JIT_AUTO), nextFuncId(0)
+void CLLVMRE::initilizeLLVM()
 {
-	C = new llvm::LLVMContext;
-	M = new llvm::Module("LLVMRegExp", *C);
+	if (!C)
+		C = new llvm::LLVMContext;
+
+	if (!M)
+		M = new llvm::Module("LLVMRegExp", *C);
+}
+
+void CLLVMRE::initializeJITEngine(int optimizationLevel /*= 0*/)
+{
+	llvm::CodeGenOpt::Level opt = llvm::CodeGenOpt::None;
+	switch (optimizationLevel)
+	{
+	case 1:
+		opt = llvm::CodeGenOpt::Less;
+		break ;
+	case 2:
+		opt = llvm::CodeGenOpt::Default;
+		break ;
+	case 3:
+		opt = llvm::CodeGenOpt::Aggressive;
+		break ;
+	}
+
+	llvm::InitializeNativeTarget();
+
+	if (!M)
+		initilizeLLVM();
+
+	JITEngine = llvm::EngineBuilder(M).setEngineKind(llvm::EngineKind::JIT).setOptLevel(opt).create();
+}
+
+CLLVMRE & CLLVMRE::Instance()
+{
+	if (!instance)
+		instance = new CLLVMRE();
+	return *instance;
+}
+
+CLLVMRE::CLLVMRE() : M(0), C(0), JITEngine(0), defaultPolicy(LLVMRE::Func::JIT_AUTO)
+{
 }
 
 
@@ -245,6 +303,5 @@ CLLVMRE::CLLVMRE() : defaultPolicy(LLVMRE::Func::JIT_AUTO), nextFuncId(0)
 
 
 CLLVMRE * CLLVMRE::instance = 0;
-llvm::ExecutionEngine * CLLVMRE::CFunc::JITEngine = 0;
-llvm::ExecutionEngine * CLLVMRE::CFunc::InterpEngine = 0;
+int CLLVMRE::CFunc::nextFuncId = 0;
 

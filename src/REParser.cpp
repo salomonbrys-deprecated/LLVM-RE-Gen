@@ -84,7 +84,7 @@ INode * getAFinal(std::string::const_iterator & c, const std::string::const_iter
 		++c;
 		return new FinalAny();
 	}
-	return new FinalChar(*c++);
+	return new FinalChar(getAChar(c, end));
 }
 
 void	addClassToSequence(std::string::const_iterator & c, const std::string::const_iterator & end, FinalSequence *s)
@@ -281,8 +281,6 @@ INode * parseNodeAnd(std::string::const_iterator & c, const std::string::const_i
 		case '|':
 			break;
 		case ')':
-//			if (!isInBracket)
-//				throw std::string("Unexpected closing bracket");
 			if (isInBracket)
 				break;
 			// Intentional fallthrough

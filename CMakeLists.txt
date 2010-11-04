@@ -23,7 +23,7 @@ endif ()
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${LLVM_ROOT}/share/llvm/cmake" )
 include ( LLVM )
 
-include_directories ( ${LLVM_ROOT}/include )
+include_directories ( AFTER ${LLVM_ROOT}/include )
 link_directories ( ${LLVM_ROOT}/lib )
 
 add_subdirectory ( src )

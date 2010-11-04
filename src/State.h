@@ -93,15 +93,11 @@ struct DState
 
 struct DFSM : public std::vector<DState*> // = Determinist Finite State Machine
 {
-	void clearStates()
+	virtual ~DFSM()
 	{
 		for (DFSM::iterator it = begin(); it != end(); ++it)
 			if (*it)
-			{
 				delete *it;
-				*it = 0;
-			}
-		clear();
 	}
 };
 
