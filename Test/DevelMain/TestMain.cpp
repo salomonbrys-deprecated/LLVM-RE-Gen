@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "INode.h"
+#include "REParser.h"
 
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
@@ -19,9 +19,12 @@ llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fN
 
 int	main()
 {
-	std::string regexp("[[:alpha:][:digit:]_\\-\\.]+\\@[[:alpha:][:digit:]_\\-]+\\.[[:alpha:]]{2,5}");
+	//std::string regexp("[[:alpha:][:digit:]_\\-\\.]+\\@[[:alpha:][:digit:]_\\-]+\\.[[:alpha:]]{2,5}");
+	std::string regexp("([abc]*([def]*)[ghi]*)@\\1");
+
 	// Creating the AST
-	INode * n = parseRegExp(regexp.begin(), regexp.end());
+	REParser parse;
+	INode * n = parse(regexp.begin(), regexp.end());
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
 	std::cout << *n << std::endl;
@@ -114,6 +117,6 @@ int	main()
 	union { void * obj; REFunc func; } u;
 	u.obj = E->getPointerToFunction(func);
 	REFunc jit = u.func;
-	int ret = jit("salomon.brys@gmail.com");
+	int ret = jit("aeeh@aeeh");
 	std::cout << std::endl << ret << std::endl;
 }

@@ -18,8 +18,8 @@ public:
 	virtual ~DualCont() { delete _r1; delete _r2; }
 
 protected:
-	DualCont(INode * r1, INode * r2) : _r1(r1), _r2(r2) {}
-	DualCont(const DualCont &l) : _r1(l._r1->clone()), _r2(l._r2->clone()) {}
+	DualCont(INode * r1, INode * r2) : INode(r1->_ng), _r1(r1), _r2(r2) {}
+	DualCont(const DualCont &l) : INode(l._ng), _r1(l._r1->clone()), _r2(l._r2->clone()) {}
 
 	INode * _r1;
 	INode * _r2;
@@ -32,14 +32,14 @@ public:
 	And(const And &l) : DualCont(l) {}
 	virtual ~And() {}
 	virtual INode * clone() { return new And(*this); }
-	virtual IState * stateify(IState * start, IState * success, bool replaceFinal, StateHelper & helper)
+	virtual IState * mkState(IState * start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		IState * middle = _r1->stateify(start, 0, replaceFinal, helper);
 		success = _r2->stateify(middle, success, replaceFinal, helper);
 		return success;
 	}
 
-	virtual void disp(std::ostream & os, unsigned int nSpace) const
+	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
 	{
 		_r1->disp(os, nSpace + 2);
 		os	<< std::setw(nSpace) << std::setfill(' ') << "" << "AND" << std::endl;
@@ -54,14 +54,14 @@ public:
 	Or(const Or &l) : DualCont(l) {}
 	virtual ~Or() {}
 	virtual INode * clone() { return new Or(*this); }
-	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
+	virtual IState * mkState(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		IState * first = _r1->stateify(start, success, replaceFinal, helper);
 		IState * second = _r2->stateify(start, success, replaceFinal, helper);
 		return new StateReplicator(first, second, helper);
 	}
 
-	virtual void disp(std::ostream & os, unsigned int nSpace) const
+	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
 	{
 		_r1->disp(os, nSpace + 2);
 		os	<< std::setw(nSpace) << std::setfill(' ') << "" << "OR" << std::endl;

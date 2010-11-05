@@ -216,7 +216,7 @@ CLLVMRE::~CLLVMRE()
 LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp)
 {
 	// Creating the AST
-	INode * n = parseRegExp(regexp.begin(), regexp.end());
+	INode * n = parse(regexp.begin(), regexp.end());
 
 	// Transforming AST into non determinist finite state machine
 	StateHelper helper;

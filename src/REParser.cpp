@@ -5,25 +5,31 @@
 //============================================================================
 
 #include "SingleCont.h"
-#include "Final.h"
 #include "DualCont.h"
+#include "REParser.h"
 
 #include <string>
 #include <cstdio>
 #include <cctype>
 #include <cstdlib>
 
-INode * parseNodeOr (std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket);
-
-INode * getSequence(char start, char end)
+INode * REParser::parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end)
 {
-	INode * ret = new FinalChar(start);
+	nextGroup = 0;
+	ng = new INode::NeededGroups;
+
+	return parseNodeOr(c, end, false);
+}
+
+INode * REParser::getSequence(char start, char end)
+{
+	INode * ret = new FinalChar(start, ng);
 	if (start != end)
 		ret = new Or(ret, getSequence(start + 1, end));
 	return ret;
 }
 
-char getAChar(std::string::const_iterator & c, const std::string::const_iterator & end)
+char REParser::getAChar(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	if (*c == '\\')
 	{
@@ -71,23 +77,27 @@ char getAChar(std::string::const_iterator & c, const std::string::const_iterator
 		default:
 			if (isalpha(*c))
 				throw std::string("Unknown escape character");
+			else if (isdigit(*c))
+			{
+				ng->insert(*c - '0');
+			}
 		}
 	}
 
 	return *c++;
 }
 
-INode * getAFinal(std::string::const_iterator & c, const std::string::const_iterator & end)
+INode * REParser::getAFinal(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	if (*c == '.')
 	{
 		++c;
-		return new FinalAny();
+		return new FinalAny(ng);
 	}
-	return new FinalChar(getAChar(c, end));
+	return new FinalChar(getAChar(c, end), ng);
 }
 
-void	addClassToSequence(std::string::const_iterator & c, const std::string::const_iterator & end, FinalSequence *s)
+void	REParser::addClassToSequence(std::string::const_iterator & c, const std::string::const_iterator & end, FinalSequence *s)
 {
 	std::string className;
 	for (;c != end; ++c)
@@ -133,7 +143,7 @@ void	addClassToSequence(std::string::const_iterator & c, const std::string::cons
 		throw std::string("Unknown character class");
 }
 
-INode * parseCharSequence(std::string::const_iterator & c, const std::string::const_iterator & end)
+INode * REParser::parseCharSequence(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	FinalSequence * ret = 0;
 	if (*c == '^')
@@ -141,10 +151,10 @@ INode * parseCharSequence(std::string::const_iterator & c, const std::string::co
 		++c;
 		if (c != end && *c == ']')
 			throw std::string("Empty character sequence []");
-		ret = new FinalNotSequence;
+		ret = new FinalNotSequence(ng);
 	}
 	else
-		ret = new FinalOrSequence;
+		ret = new FinalOrSequence(ng);
 
 	while (c != end && *c != ']')
 	{
@@ -190,7 +200,7 @@ INode * parseCharSequence(std::string::const_iterator & c, const std::string::co
 	return ret;
 }
 
-INode * execRepeat(int min, int max, INode* ret, int n = 1)
+INode * REParser::execRepeat(int min, int max, INode* ret, int n /*= 1*/)
 {
 	if (n == min + 1)
 		ret = new Optional(ret);
@@ -200,7 +210,7 @@ INode * execRepeat(int min, int max, INode* ret, int n = 1)
 	return ret;
 }
 
-INode * parseRepeat(std::string::const_iterator & c, const std::string::const_iterator & end, INode* ret)
+INode * REParser::parseRepeat(std::string::const_iterator & c, const std::string::const_iterator & end, INode* ret)
 {
 	std::string smin, smax;
 
@@ -223,21 +233,25 @@ INode * parseRepeat(std::string::const_iterator & c, const std::string::const_it
 
 	return execRepeat(min, max, ret);
 }
-INode * parseNodeUnit(std::string::const_iterator & c, const std::string::const_iterator & end)
+INode * REParser::parseNodeUnit(std::string::const_iterator & c, const std::string::const_iterator & end)
 {
 	INode * ret = 0;
 
 	switch (*c)
 	{
 	case '(':
+	{
 		++c;
+		unsigned int g = ++nextGroup;
 		ret = parseNodeOr(c, end, true);
+		ret->setGroup(g);
 		if (ret == 0)
 			throw std::string("empty brackets");
 		if (c == end || *c != ')')
 			throw std::string("Incomplete group, no matching ')'");
 		++c;
 		break;
+	}
 	case '[':
 		++c;
 		if (c == end)
@@ -271,7 +285,7 @@ INode * parseNodeUnit(std::string::const_iterator & c, const std::string::const_
 	return ret;
 }
 
-INode * parseNodeAnd(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
+INode * REParser::parseNodeAnd(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
 {
 	INode * ret = parseNodeUnit(c, end);
 
@@ -291,7 +305,7 @@ INode * parseNodeAnd(std::string::const_iterator & c, const std::string::const_i
 	return ret;
 }
 
-INode * parseNodeOr(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
+INode * REParser::parseNodeOr(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket)
 {
 	INode * ret = parseNodeAnd(c, end, isInBracket);
 	if (c != end && *c == '|')
@@ -302,9 +316,4 @@ INode * parseNodeOr(std::string::const_iterator & c, const std::string::const_it
 		ret = new Or(ret, parseNodeOr(c, end, isInBracket));
 	}
 	return ret;
-}
-
-INode * parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end)
-{
-	return parseNodeOr(c, end, false);
 }

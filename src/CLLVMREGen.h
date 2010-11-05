@@ -3,6 +3,7 @@
 
 #include "LLVMREGen.h"
 #include "State.h"
+#include "REParser.h"
 
 #include <string>
 #include <queue>
@@ -85,6 +86,8 @@ private:
 	llvm::ExecutionEngine * JITEngine;
 
 	Func::Policy defaultPolicy;
+
+	REParser parse;
 
 	static CLLVMRE *instance;
 };
