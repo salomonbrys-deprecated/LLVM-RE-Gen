@@ -20,7 +20,7 @@ public:
 
 	virtual void addTransitions(IState * start, IState * success) = 0;
 
-	virtual IState * mkState(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
+	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		if (!success)
 		{
@@ -35,14 +35,14 @@ public:
 	}
 
 protected:
-	Final(INode::NeededGroups * & ng) : INode(ng) {}
+	Final() {}
 };
 
 class FinalChar : public Final
 {
 public:
-	FinalChar(char c, INode::NeededGroups * & ng) : Final(ng), _c(c) {}
-	FinalChar(const FinalChar &l) : Final(l._ng), _c(l._c) {}
+	FinalChar(char c) : _c(c) {}
+	FinalChar(const FinalChar &l) : _c(l._c) {}
 	virtual ~FinalChar() {}
 	virtual INode * clone() { return new FinalChar(*this); }
 	virtual void addTransitions(IState * start, IState * success)
@@ -50,7 +50,7 @@ public:
 		start->addTransition(_c, success);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << '\'' << _c << '\'' << std::endl;
 	}
@@ -61,8 +61,6 @@ private:
 class FinalAny : public Final
 {
 public:
-	FinalAny(INode::NeededGroups * & ng) : Final(ng) {}
-	FinalAny(const FinalAny & l) : Final(l._ng) {}
 	virtual ~FinalAny() {}
 	virtual INode * clone() { return new FinalAny(*this); }
 	virtual void addTransitions(IState * start, IState * success)
@@ -70,7 +68,7 @@ public:
 		start->addTransition(-1, success);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << "ANY" << std::endl;
 	}
@@ -82,8 +80,8 @@ public:
 	virtual ~FinalSequence() {}
 
 protected:
-	FinalSequence(INode::NeededGroups * & ng) : Final(ng) {}
-	FinalSequence(const FinalSequence &l) : Final(l._ng), _s(l._s) {}
+	FinalSequence() {}
+	FinalSequence(const FinalSequence &l) : _s(l._s) {}
 
 public:
 	FinalSequence *	addChar(char c) { _s.insert(c); return this; }
@@ -97,7 +95,7 @@ protected:
 class FinalOrSequence : public FinalSequence
 {
 public:
-	FinalOrSequence(INode::NeededGroups * & ng) : FinalSequence(ng) {}
+	FinalOrSequence() {}
 	FinalOrSequence(const FinalOrSequence &l) : FinalSequence(l) {}
 	virtual ~FinalOrSequence() {}
 	virtual INode * clone() { return new FinalOrSequence(*this); }
@@ -107,7 +105,7 @@ public:
 			start->addTransition(*i, success);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << '[';
 		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)
@@ -119,7 +117,7 @@ public:
 class FinalNotSequence : public FinalSequence
 {
 public:
-	FinalNotSequence(INode::NeededGroups * & ng) : FinalSequence(ng) {}
+	FinalNotSequence() {}
 	FinalNotSequence(const FinalNotSequence &l) : FinalSequence(l) {}
 	virtual ~FinalNotSequence() {}
 	virtual INode * clone() { return new FinalNotSequence(*this); }
@@ -133,7 +131,7 @@ public:
 				start->addTransition(i, success);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os << std::setw(nSpace) << std::setfill(' ') << "" << "NOT [";
 		for (CharSet::const_iterator i = _s.begin(); i != _s.end(); ++i)

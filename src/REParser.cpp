@@ -15,15 +15,12 @@
 
 INode * REParser::parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end)
 {
-	nextGroup = 0;
-	ng = new INode::NeededGroups;
-
 	return parseNodeOr(c, end, false);
 }
 
 INode * REParser::getSequence(char start, char end)
 {
-	INode * ret = new FinalChar(start, ng);
+	INode * ret = new FinalChar(start);
 	if (start != end)
 		ret = new Or(ret, getSequence(start + 1, end));
 	return ret;
@@ -75,12 +72,8 @@ char REParser::getAChar(std::string::const_iterator & c, const std::string::cons
 			return (char)n;
 		}
 		default:
-			if (isalpha(*c))
+			if (isalpha(*c) || isdigit(*c))
 				throw std::string("Unknown escape character");
-			else if (isdigit(*c))
-			{
-				ng->insert(*c - '0');
-			}
 		}
 	}
 
@@ -92,9 +85,9 @@ INode * REParser::getAFinal(std::string::const_iterator & c, const std::string::
 	if (*c == '.')
 	{
 		++c;
-		return new FinalAny(ng);
+		return new FinalAny;
 	}
-	return new FinalChar(getAChar(c, end), ng);
+	return new FinalChar(getAChar(c, end));
 }
 
 void	REParser::addClassToSequence(std::string::const_iterator & c, const std::string::const_iterator & end, FinalSequence *s)
@@ -151,10 +144,10 @@ INode * REParser::parseCharSequence(std::string::const_iterator & c, const std::
 		++c;
 		if (c != end && *c == ']')
 			throw std::string("Empty character sequence []");
-		ret = new FinalNotSequence(ng);
+		ret = new FinalNotSequence;
 	}
 	else
-		ret = new FinalOrSequence(ng);
+		ret = new FinalOrSequence;
 
 	while (c != end && *c != ']')
 	{
@@ -242,9 +235,7 @@ INode * REParser::parseNodeUnit(std::string::const_iterator & c, const std::stri
 	case '(':
 	{
 		++c;
-		unsigned int g = ++nextGroup;
 		ret = parseNodeOr(c, end, true);
-		ret->setGroup(g);
 		if (ret == 0)
 			throw std::string("empty brackets");
 		if (c == end || *c != ')')

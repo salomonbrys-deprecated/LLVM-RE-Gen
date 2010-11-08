@@ -18,8 +18,8 @@ public:
 	virtual ~SingleCont() { delete _r; }
 
 protected:
-	SingleCont(INode * r) : INode(r->_ng), _r(r) {}
-	SingleCont(const SingleCont &l) : INode(l._ng), _r(l._r->clone()) {}
+	SingleCont(INode * r) : _r(r) {}
+	SingleCont(const SingleCont &l) : _r(l._r->clone()) {}
 
 	INode * _r;
 };
@@ -31,13 +31,18 @@ public:
 	Repeat(const Repeat &l) : SingleCont(l) {}
 	virtual ~Repeat() {}
 	virtual INode * clone() { return new Repeat(*this); }
-	virtual IState * mkState(IState *start, IState *, bool, StateHelper & helper)
+	virtual IState * stateify(IState *start, IState * /*ignored*/, bool /*ignored*/, StateHelper & helper)
 	{
-		_r->stateify(start, start, false, helper);
-		return start;
+		State * success = new State(helper);
+		success->setFinal(start->Final());
+		start->addReplicatedFinal(success);
+
+		_r->stateify(start, success, false, helper);
+		_r->stateify(success, success, false, helper);
+		return new StateReplicator(start, success, helper);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os	<< std::setw(nSpace) << std::setfill(' ') << "" << "Repeat:" << std::endl;
 		_r->disp(os, nSpace + 2);
@@ -52,7 +57,7 @@ public:
 	Optional(const Optional &l) : SingleCont(l) {}
 	virtual ~Optional() {}
 	virtual INode * clone() { return new Optional(*this); }
-	virtual IState * mkState(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
+	virtual IState * stateify(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
 		if (!success)
 		{
@@ -64,7 +69,7 @@ public:
 		return new StateReplicator(start, nSuccess, helper);
 	}
 
-	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
+	virtual void disp(std::ostream & os, unsigned int nSpace) const
 	{
 		os	<< std::setw(nSpace) << std::setfill(' ') << "" << "Optional:" << std::endl;
 		_r->disp(os, nSpace + 2);

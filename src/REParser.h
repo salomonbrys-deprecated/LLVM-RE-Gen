@@ -14,7 +14,6 @@
 class REParser
 {
 public:
-	REParser() : nextGroup(0), ng(0) {}
 	INode * parseRegExp(std::string::const_iterator c, const std::string::const_iterator & end);
 	INode * operator () (std::string::const_iterator c, const std::string::const_iterator & end) { return parseRegExp(c, end); }
 
@@ -29,9 +28,6 @@ private:
 	INode * parseNodeUnit(std::string::const_iterator & c, const std::string::const_iterator & end);
 	INode * parseNodeAnd(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket);
 	INode * parseNodeOr(std::string::const_iterator & c, const std::string::const_iterator & end, bool isInBracket);
-
-	unsigned int nextGroup;
-	INode::NeededGroups * ng;
 };
 
 #endif /* REPARSER_H_ */

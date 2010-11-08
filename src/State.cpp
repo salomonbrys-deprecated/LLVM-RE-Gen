@@ -28,7 +28,7 @@ std::ostream & operator << (std::ostream & os, const StateHelper & helper)
 	int stateIndex = 0;
 	for (StateVector::const_iterator state = helper.states.begin(); state != helper.states.end(); ++state, ++stateIndex)
 	{
-		os << "State " << stateIndex << ((*state)->Final() ? " F" : "") << " =  ";
+		os << "State " << stateIndex << ((*state)->Final() ? " F " : "   ") << '=';
 		for (StateTransitions::const_iterator transition = (*state)->Transitions().begin(); transition != (*state)->Transitions().end(); ++transition)
 			os << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second->Name() << ']';
 		os << std::endl;
