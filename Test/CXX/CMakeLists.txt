@@ -14,4 +14,4 @@ endif ()
 
 add_executable ( Test_CXX TestMain.cpp )
 
-target_link_libraries ( Test_CXX LLVMREGen )
+target_link_libraries ( Test_CXX ${LLVMREGEN_BUILD_WITH} )

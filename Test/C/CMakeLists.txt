@@ -10,4 +10,4 @@ endif ()
 
 add_executable ( Test_C TestMain.c )
 
-target_link_libraries ( Test_C LLVMREGen )
+target_link_libraries ( Test_C ${LLVMREGEN_BUILD_WITH} )

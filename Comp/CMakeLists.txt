@@ -36,7 +36,8 @@ add_executable ( llvm-regexp ${source_files} )
 
 llvm_map_components_to_libraries ( REQ_LLVM_LIBRARIES core bitwriter )
 
-target_link_libraries ( llvm-regexp ${REQ_LLVM_LIBRARIES} LLVMREGen )
+target_link_libraries ( llvm-regexp ${REQ_LLVM_LIBRARIES} ${LLVMREGEN_BUILD_WITH} )
+
 
 install (
 	TARGETS llvm-regexp

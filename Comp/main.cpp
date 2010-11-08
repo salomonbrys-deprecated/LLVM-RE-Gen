@@ -17,15 +17,6 @@
 
 #include "LLVMREGen.h"
 
-class OptimLevelConstraint : public TCLAP::Constraint<int>
-{
-	public:
-		virtual std::string description() const { return "Integer between 0 and 3"; }
-		virtual std::string shortID() const { return "int"; }
-		virtual bool check(const int& value) const { return value >= 0 && value <= 3; }
-		virtual ~OptimLevelConstraint() {}
-};
-
 int main(int argc, char ** argv)
 {
 	try
@@ -36,10 +27,6 @@ int main(int argc, char ** argv)
 		cmd.add(outputFile);
 		TCLAP::SwitchArg noPrint("n", "no-print-fnames", "Do NOT print the generated function name for each given regexp when output-file is set", false);
 		cmd.add(noPrint);
-
-		OptimLevelConstraint olc;
-		TCLAP::ValueArg<int> optimizationLevel("O", "optimization-level", "Optimization level (0, 1, 2: def, 3)", false, 2, &olc);
-		cmd.add(optimizationLevel);
 
 		TCLAP::UnlabeledMultiArg<std::string> regexp("regexp", "Regular expression to be compiled", true, "string");
 		cmd.add(regexp);
