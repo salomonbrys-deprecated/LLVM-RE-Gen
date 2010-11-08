@@ -26,9 +26,9 @@ public:
 		{
 			success = new State(helper);
 			if (replaceFinal)
-				start->Final(false);
+				start->setFinal(false);
 			else
-				success->Final(false);
+				success->setFinal(false);
 		}
 		addTransitions(start, success);
 		return success;

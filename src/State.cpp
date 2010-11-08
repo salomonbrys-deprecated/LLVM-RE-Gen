@@ -23,6 +23,32 @@ void StateHelper::clear()
 	}
 }
 
+std::ostream & operator << (std::ostream & os, const StateHelper & helper)
+{
+	int stateIndex = 0;
+	for (StateVector::const_iterator state = helper.states.begin(); state != helper.states.end(); ++state, ++stateIndex)
+	{
+		os << "State " << stateIndex << ((*state)->Final() ? " F" : "") << " =  ";
+		for (StateTransitions::const_iterator transition = (*state)->Transitions().begin(); transition != (*state)->Transitions().end(); ++transition)
+			os << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second->Name() << ']';
+		os << std::endl;
+	}
+	return os;
+}
+
+std::ostream & operator << (std::ostream & os, const DFSM & dfsm)
+{
+	int stateIndex = 0;
+	for (DFSM::const_iterator state = dfsm.begin(); state != dfsm.end(); ++state, ++stateIndex)
+		if (*state)
+		{
+			os << "DState " << stateIndex << ((*state)->final ? " F" : "") << " =  ";
+			for (DStateTransitions::const_iterator transition = (*state)->transitions.begin(); transition != (*state)->transitions.end(); ++transition)
+				os << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second << ']';
+			os << std::endl;
+		}
+	return os;
+}
 
 void determine(StateVector & ndStateList, DFSM & dfsm)
 {

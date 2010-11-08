@@ -34,10 +34,22 @@ public:
 
 	IState * stateify(IState * start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
+//		if (_group != 0 && _ng->count(_group))
+//		{
+//			State * tmpStart = new State;
+//			State * tmpSuccess = new State;
+//			tmpStart->addTransition(-2, start);
+//			if (success)
+//				tmpSuccess->addTransition(-2, success);
+//			start = tmp;
+//		}
 		return this->mkState(start, success, replaceFinal, helper);
 	}
 
 	void setGroup(unsigned int g) { _group = g; }
+
+	void addNeededGroup(unsigned int g) { _ng->insert(g); }
+	const NeededGroups & getNeededGroups() { return *_ng; }
 
 protected:
 	virtual void dispContent(std::ostream & os, unsigned int nSpace) const = 0;

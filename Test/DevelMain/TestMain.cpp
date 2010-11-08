@@ -25,9 +25,10 @@ int	main()
 	// Creating the AST
 	REParser parse;
 	INode * n = parse(regexp.begin(), regexp.end());
+	n->addNeededGroup(2);
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
-	std::cout << *n << std::endl;
+	std::cout << *n;
 	std::cout << std::endl << "1-----------------------------------------------------------" << std::endl << std::endl;
 #endif
 
@@ -37,14 +38,7 @@ int	main()
 	n->stateify(helper.states[0], 0, true, helper);
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
-	int stateIndex = 0;
-	for (StateVector::const_iterator state = helper.states.begin(); state != helper.states.end(); ++state, ++stateIndex)
-	{
-		std::cout << "State " << stateIndex << ": " << ((*state)->Final() ? "(F)" : "") << " =  ";
-		for (StateTransitions::const_iterator transition = (*state)->Transitions().begin(); transition != (*state)->Transitions().end(); ++transition)
-			std::cout << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second->Name() << ']';
-		std::cout << std::endl;
-	}
+	std::cout << helper;
 	std::cout << std::endl << "2-----------------------------------------------------------" << std::endl << std::endl;
 #endif
 
@@ -56,15 +50,7 @@ int	main()
 	determine(helper.states, *dfsm);
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
-	stateIndex = 0;
-	for (DFSM::const_iterator state = dfsm->begin(); state != dfsm->end(); ++state, ++stateIndex)
-		if (*state)
-		{
-			std::cout << "DState " << stateIndex << ": " << ((*state)->final ? "(F)" : "") << " =  ";
-			for (DStateTransitions::const_iterator transition = (*state)->transitions.begin(); transition != (*state)->transitions.end(); ++transition)
-				std::cout << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second << ']';
-			std::cout << std::endl;
-		}
+	std::cout << *dfsm;
 	std::cout << std::endl << "3-----------------------------------------------------------" << std::endl << std::endl;
 #endif
 
@@ -75,15 +61,7 @@ int	main()
 	reduce(*dfsm);
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
-	stateIndex = 0;
-	for (DFSM::const_iterator state = dfsm->begin(); state != dfsm->end(); ++state, ++stateIndex)
-		if (*state)
-		{
-			std::cout << "DState " << stateIndex << ": " << ((*state)->final ? "(F)" : "") << " =  ";
-			for (DStateTransitions::const_iterator transition = (*state)->transitions.begin(); transition != (*state)->transitions.end(); ++transition)
-				std::cout << " [" << (transition->first == -1 ? '.' : (char)transition->first) << ": " << transition->second << ']';
-			std::cout << std::endl;
-		}
+	std::cout << *dfsm;
 	std::cout << std::endl << "4-----------------------------------------------------------" << std::endl << std::endl;
 #endif
 
@@ -117,6 +95,6 @@ int	main()
 	union { void * obj; REFunc func; } u;
 	u.obj = E->getPointerToFunction(func);
 	REFunc jit = u.func;
-	int ret = jit("aeeh@aeeh");
+	int ret = jit("salomon.brys@gmail.com");
 	std::cout << std::endl << ret << std::endl;
 }

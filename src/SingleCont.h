@@ -52,12 +52,16 @@ public:
 	Optional(const Optional &l) : SingleCont(l) {}
 	virtual ~Optional() {}
 	virtual INode * clone() { return new Optional(*this); }
-	virtual IState * mkState(IState *start, IState *, bool replaceFinal, StateHelper & helper)
+	virtual IState * mkState(IState *start, IState * success, bool replaceFinal, StateHelper & helper)
 	{
-		IState * success = new State(helper);
-		success->Final(start->Final());
-		_r->stateify(start, success, false, helper);
-		return new StateReplicator(start, success, helper);
+		if (!success)
+		{
+			success = new State(helper);
+			success->setFinal(start->Final());
+			start->addReplicatedFinal(success);
+		}
+		IState * nSuccess = _r->stateify(start, success, false, helper);
+		return new StateReplicator(start, nSuccess, helper);
 	}
 
 	virtual void dispContent(std::ostream & os, unsigned int nSpace) const
