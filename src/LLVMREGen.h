@@ -60,6 +60,8 @@ public:
 		virtual std::string getFuncName() const = 0;
 		virtual const std::string & getRegexp() const = 0;
 
+		virtual std::string getRandomTryString() const = 0;
+
 		enum Policy
 		{
 			JIT_ALWAYS,

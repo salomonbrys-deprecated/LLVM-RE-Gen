@@ -22,6 +22,9 @@
 #include <iostream>
 #include <iomanip>
 
+#include <stdlib.h>
+#include <time.h>
+
 #define LLVMREGEN_AUTO_JIT_COUNT 10000
 
 llvm::Function * CompileRE(llvm::Module * M, DFSM * dfsm, const std::string & fName);
@@ -147,6 +150,18 @@ const std::string & CLLVMRE::CFunc::getRegexp() const
 	return regexp;
 }
 
+std::string CLLVMRE::CFunc::getRandomTryString() const
+{
+	static bool init = false;
+
+	if (!init)
+	{
+		srand(time(NULL));
+		init = true;
+	}
+	return _getRandomTryStringFrom(0);
+}
+
 LLVMRE::Func::Policy CLLVMRE::CFunc::getPolicy() const
 {
 	return policy;
@@ -194,6 +209,31 @@ int CLLVMRE::CFunc::interpret(const char * str) const
 
 	return ret;
 }
+
+std::string CLLVMRE::CFunc::_getRandomTryStringFrom(int stateId) const
+{
+	const DState * state = (*dfsm)[stateId];
+
+	if (state->final && (state->transitions.empty() || (rand() % 6) == 0))
+		return "";
+
+	DStateTransitions::const_iterator item;
+
+	item = state->transitions.find(-1);
+	if (item == state->transitions.end() || (rand() % 3) != 0)
+	{
+		item = state->transitions.begin();
+		std::advance(item, rand() % state->transitions.size());
+	}
+
+	std::string ret;
+
+	if (item->first != -1)
+		ret += (char)item->first;
+
+	return ret + _getRandomTryStringFrom(item->second);
+}
+
 
 
 

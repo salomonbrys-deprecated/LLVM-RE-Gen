@@ -41,12 +41,16 @@ public:
 		virtual std::string getFuncName() const;
 		virtual const std::string & getRegexp() const;
 
+		virtual std::string getRandomTryString() const;
+
 		virtual Policy getPolicy() const;
 		virtual void setPolicy(Func::Policy);
 
 	private:
 		CFunc(DFSM * dfsm, const std::string & regexp, Policy policy);
 		int interpret(const char * str) const;
+
+		std::string _getRandomTryStringFrom(int stateId) const;
 
 		DFSM * dfsm;
 		llvm::Function * func;
