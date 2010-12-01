@@ -339,7 +339,13 @@ CLLVMRE::CLLVMRE() : M(0), C(0), JITEngine(0), defaultPolicy(LLVMRE::Func::JIT_A
 }
 
 
-
+extern "C"
+{
+	LLVMRE & LLVMRE_Instance()
+	{
+		return CLLVMRE::Instance();
+	}
+}
 
 
 CLLVMRE * CLLVMRE::instance = 0;

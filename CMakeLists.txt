@@ -70,6 +70,5 @@ add_subdirectory ( Comp )
 
 
 if ( LLVMREGEN_BUILD_TESTS )
-	add_subdirectory ( Test/C )
 	add_subdirectory ( Test/CXX )
 endif ()
