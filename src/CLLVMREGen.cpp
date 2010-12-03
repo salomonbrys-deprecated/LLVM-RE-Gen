@@ -100,7 +100,7 @@ void CLLVMRE::CFunc::compileInLLVM(int optimizationLevel /*= 0*/, const std::str
 	if (fName.empty())
 	{
 		std::stringstream sstr;
-		sstr << CLLVMRE::instance->defaultPrefix << '_' << ++nextFuncId;
+		sstr << CLLVMRE::instance->defaultPrefix << '_' << nextFuncId++;
 		fName = sstr.str();
 	}
 	func = CompileRE(CLLVMRE::instance->M, dfsm, fName);
