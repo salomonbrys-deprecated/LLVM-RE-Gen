@@ -75,7 +75,7 @@ int CLLVMRE::CFunc::execute(const char *str) const
 	return interpret(str);
 }
 
-void CLLVMRE::CFunc::JITFunc(int optimizationLevel /*= 0*/)
+void CLLVMRE::CFunc::JITFunc(int optimizationLevel /*= 0*/, const std::string & name /* = "" */)
 {
 	if (jit)
 		return ;
@@ -84,21 +84,26 @@ void CLLVMRE::CFunc::JITFunc(int optimizationLevel /*= 0*/)
 		CLLVMRE::instance->initializeJITEngine();
 
 	if (!func)
-		compileInLLVM(optimizationLevel);
+		compileInLLVM(optimizationLevel, name);
 
 	union { void * obj; CFuncPtr func; } u;
 	u.obj = CLLVMRE::instance->JITEngine->getPointerToFunction(func);
 	jit = u.func;
 }
 
-void CLLVMRE::CFunc::compileInLLVM(int optimizationLevel /*= 0*/)
+void CLLVMRE::CFunc::compileInLLVM(int optimizationLevel /*= 0*/, const std::string & name /* = "" */)
 {
 	if (!CLLVMRE::instance->M)
 		CLLVMRE::instance->initilizeLLVM();
 
-	std::stringstream sstr;
-	sstr << "llvmre_" << ++nextFuncId;
-	func = CompileRE(CLLVMRE::instance->M, dfsm, sstr.str());
+	std::string fName = name;
+	if (fName.empty())
+	{
+		std::stringstream sstr;
+		sstr << CLLVMRE::instance->defaultPrefix << '_' << ++nextFuncId;
+		fName = sstr.str();
+	}
+	func = CompileRE(CLLVMRE::instance->M, dfsm, fName);
 
 	// Optimising the LLVM Code
 	if (optimizationLevel)
@@ -306,6 +311,16 @@ void CLLVMRE::setDefaultPolicy(LLVMRE::Func::Policy p)
 	defaultPolicy = p;
 }
 
+const std::string & CLLVMRE::getDefaultPrefix()
+{
+	return defaultPrefix;
+}
+
+void CLLVMRE::setDefaultPrefix(const std::string & prefix)
+{
+	defaultPrefix = prefix;
+}
+
 void CLLVMRE::initilizeLLVM()
 {
 	if (!M && !C)
@@ -346,7 +361,7 @@ CLLVMRE & CLLVMRE::Instance()
 	return *instance;
 }
 
-CLLVMRE::CLLVMRE() : M(0), C(0), JITEngine(0), defaultPolicy(LLVMRE::Func::JIT_AUTO)
+CLLVMRE::CLLVMRE() : M(0), C(0), JITEngine(0), defaultPolicy(LLVMRE::Func::JIT_AUTO), defaultPrefix("llvmre")
 {
 }
 

@@ -23,7 +23,7 @@ Function * CompileRE(Module * M, DFSM * dfsm, const std::string & fName)
 
 //	Function * fPutchar = cast<Function>(M->getOrInsertFunction("putchar", Type::getInt32Ty(C), Type::getInt32Ty(C), (Type *)0));
 	
-	Function * func = cast<Function>(M->getOrInsertFunction(fName, Type::getInt32Ty(C), Type::getInt8PtrTy(C), Type::getInt32PtrTy(C), (Type *)0));
+	Function * func = cast<Function>(M->getOrInsertFunction(fName, Type::getInt32Ty(C), Type::getInt8PtrTy(C), (Type *)0));
 	Argument * str = func->arg_begin();
 	str->setName("str");
 

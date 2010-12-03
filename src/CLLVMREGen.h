@@ -27,8 +27,8 @@ public:
 		virtual int operator ()(const char *str) const;
 		virtual int execute(const char *str) const;
 
-		virtual void JITFunc(int optimizationLevel = 0);
-		virtual void compileInLLVM(int optimizationLevel = 0);
+		virtual void JITFunc(int optimizationLevel = 0, const std::string & name = "");
+		virtual void compileInLLVM(int optimizationLevel = 0, const std::string & name = "");
 
 		virtual const llvm::Function * getLLVMFunction();
 		virtual const llvm::Function * getLLVMFunction() const;
@@ -78,6 +78,8 @@ public:
 
 	virtual Func::Policy getDefaultPolicy() const;
 	virtual void setDefaultPolicy(Func::Policy);
+	virtual const std::string & getDefaultPrefix();
+	virtual void setDefaultPrefix(const std::string &);
 
 	virtual void initilizeLLVM();
 	virtual void initializeJITEngine(int optimizationLevel = 0);
@@ -93,6 +95,7 @@ private:
 	llvm::ExecutionEngine * JITEngine;
 
 	Func::Policy defaultPolicy;
+	std::string defaultPrefix;
 
 	REParser parse;
 

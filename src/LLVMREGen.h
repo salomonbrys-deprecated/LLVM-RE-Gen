@@ -44,8 +44,8 @@ public:
 		virtual int operator () (const char *str) const = 0;
 		virtual int execute(const char *str) const = 0;
 
-		virtual void JITFunc(int optimizationLevel = 0) = 0;
-		virtual void compileInLLVM(int optimizationLevel = 0) = 0;
+		virtual void JITFunc(int optimizationLevel = 0, const std::string & name = "") = 0;
+		virtual void compileInLLVM(int optimizationLevel = 0, const std::string & name = "") = 0;
 
 		virtual const llvm::Function * getLLVMFunction() = 0;
 		virtual const llvm::Function * getLLVMFunction() const = 0;
@@ -87,6 +87,8 @@ public:
 
 	virtual Func::Policy getDefaultPolicy() const = 0;
 	virtual void setDefaultPolicy(Func::Policy) = 0;
+	virtual const std::string & getDefaultPrefix() = 0;
+	virtual void setDefaultPrefix(const std::string &) = 0;
 };
 
 extern "C"
