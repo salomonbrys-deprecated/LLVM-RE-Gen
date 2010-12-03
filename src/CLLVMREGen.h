@@ -71,6 +71,9 @@ public:
 
 	virtual Func * createRE(const std::string & regexp);
 
+	virtual void setLLVMModule(llvm::Module * m);
+	virtual const llvm::Module * getLLVMModule() const;
+
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const;
 
 	virtual Func::Policy getDefaultPolicy() const;

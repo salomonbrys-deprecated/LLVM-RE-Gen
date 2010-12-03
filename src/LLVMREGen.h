@@ -80,6 +80,9 @@ public:
 	virtual void initilizeLLVM() = 0;
 	virtual void initializeJITEngine(int optimizationLevel = 0) = 0;
 
+	virtual void setLLVMModule(llvm::Module * m) = 0;
+	virtual const llvm::Module * getLLVMModule() const = 0;
+
 	virtual void WriteBitcodeToFile(llvm::raw_ostream * os) const = 0;
 
 	virtual Func::Policy getDefaultPolicy() const = 0;

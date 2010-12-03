@@ -279,6 +279,18 @@ LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp)
 	return new CFunc(dfsm, regexp, defaultPolicy);
 }
 
+void CLLVMRE::setLLVMModule(llvm::Module * m)
+{
+	assert(!M && "Cannot set a module if a module has already been set");
+
+	M = m;
+}
+
+const llvm::Module * CLLVMRE::getLLVMModule() const
+{
+	return M;
+}
+
 void CLLVMRE::WriteBitcodeToFile(llvm::raw_ostream * os) const
 {
 	llvm::WriteBitcodeToFile(M, *os);
@@ -296,7 +308,7 @@ void CLLVMRE::setDefaultPolicy(LLVMRE::Func::Policy p)
 
 void CLLVMRE::initilizeLLVM()
 {
-	if (!C)
+	if (!M && !C)
 		C = new llvm::LLVMContext;
 
 	if (!M)
