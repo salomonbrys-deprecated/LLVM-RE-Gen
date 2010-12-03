@@ -50,7 +50,7 @@ std::ostream & operator << (std::ostream & os, const DFSM & dfsm)
 	return os;
 }
 
-void determine(StateVector & ndStateList, DFSM & dfsm)
+void determine(StateVector & ndStateList, DFSM & dfsm, bool stopAtFirstMatch)
 {
 	typedef std::set<int> DStateSet;
 	typedef std::map<DStateSet, int> ConnectionsMap;
@@ -87,41 +87,39 @@ void determine(StateVector & ndStateList, DFSM & dfsm)
 				involved.insert(tr->first);
 		}
 
-		for (DStateSet::const_iterator chars = involved.begin(); chars != involved.end(); ++chars)
-		{
-			DStateSet nextState;
-			for (DStateSet::const_iterator stId = front.begin(); stId != front.end(); ++stId)
+		if (!stopAtFirstMatch || !dstate->final)
+			for (DStateSet::const_iterator chars = involved.begin(); chars != involved.end(); ++chars)
 			{
-				State * state = ndStateList[*stId];
-				ConstStateTransitionsRange eqr;
-				eqr = state->Transitions().equal_range(*chars);
-				for (; eqr.first != eqr.second; ++eqr.first)
-					nextState.insert(eqr.first->second->Name());
-//				eqr = state->Transitions().equal_range(-1);
-				for (StateTransitions::const_iterator anyEqr = anyRanges[*stId].first; anyEqr != anyRanges[*stId].second; ++anyEqr)
-					nextState.insert(anyEqr->second->Name());
+				DStateSet nextState;
+				for (DStateSet::const_iterator stId = front.begin(); stId != front.end(); ++stId)
+				{
+					State * state = ndStateList[*stId];
+					ConstStateTransitionsRange eqr;
+					eqr = state->Transitions().equal_range(*chars);
+					for (; eqr.first != eqr.second; ++eqr.first)
+						nextState.insert(eqr.first->second->Name());
+					for (StateTransitions::const_iterator anyEqr = anyRanges[*stId].first; anyEqr != anyRanges[*stId].second; ++anyEqr)
+						nextState.insert(anyEqr->second->Name());
+				}
+
+				int nextStateId;
+				ConnectionsMap::const_iterator nextStateIt = connections.find(nextState);
+				if (nextStateIt != connections.end())
+					nextStateId = nextStateIt->second;
+				else
+				{
+					nextStateId = ++id;
+					//connections[nextState] = nextStateId;
+					connections.insert(ConnectionsMap::value_type(nextState, nextStateId));
+					toDo.push(nextState);
+				}
+
+				DStateTransitions::const_iterator transitionIt = dstate->transitions.find(-1);
+				if (transitionIt == dstate->transitions.end() || transitionIt->second != nextStateId)
+					//dstate->transitions[*chars] = nextStateId;
+					dstate->transitions.insert(DStateTransitions::value_type(*chars, nextStateId));
 			}
 
-			int nextStateId;
-			ConnectionsMap::const_iterator nextStateIt = connections.find(nextState);
-			if (nextStateIt != connections.end())
-				nextStateId = nextStateIt->second;
-			else
-			{
-				nextStateId = ++id;
-				//connections[nextState] = nextStateId;
-				connections.insert(ConnectionsMap::value_type(nextState, nextStateId));
-				toDo.push(nextState);
-			}
-
-			DStateTransitions::const_iterator transitionIt = dstate->transitions.find(-1);
-			if (transitionIt == dstate->transitions.end() || transitionIt->second != nextStateId)
-				//dstate->transitions[*chars] = nextStateId;
-				dstate->transitions.insert(DStateTransitions::value_type(*chars, nextStateId));
-		}
-
-		//dfsm[connections[toDo.front()]] = dstate;
-		//dfsm.insert(DFSM::value_type(connections[front], dstate));
 		dfsm.push_back(dstate);
 
 		toDo.pop();

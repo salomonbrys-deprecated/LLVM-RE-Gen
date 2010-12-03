@@ -45,7 +45,7 @@ int	main()
 
 	// Determining the finite state machine
 	DFSM * dfsm = new DFSM;
-	determine(helper.states, *dfsm);
+	determine(helper.states, *dfsm, false);
 
 #ifdef TEST_DISPLAY_INTERMEDIATE
 	std::cout << *dfsm;

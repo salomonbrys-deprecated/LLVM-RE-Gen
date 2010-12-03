@@ -258,7 +258,7 @@ CLLVMRE::~CLLVMRE()
 	instance = 0;
 }
 
-LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp)
+LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp, bool stopAtFirstMatch /* = false */)
 {
 	// Creating the AST
 	INode * n = parse(regexp.begin(), regexp.end());
@@ -273,7 +273,7 @@ LLVMRE::Func * CLLVMRE::createRE(const std::string & regexp)
 
 	// Determining the finite state machine
 	DFSM * dfsm = new DFSM;
-	determine(helper.states, *dfsm);
+	determine(helper.states, *dfsm, stopAtFirstMatch);
 
 	// Deleting the non determinist finite state machine
 	helper.clear();

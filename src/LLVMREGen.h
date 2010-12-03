@@ -75,7 +75,7 @@ public:
 
 	virtual ~LLVMRE() {}
 
-	virtual Func * createRE(const std::string & regexp) = 0;
+	virtual Func * createRE(const std::string & regexp, bool stopAtFirstMatch = false) = 0;
 
 	virtual void initilizeLLVM() = 0;
 	virtual void initializeJITEngine(int optimizationLevel = 0) = 0;

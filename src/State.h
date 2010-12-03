@@ -124,7 +124,7 @@ struct DFSM : public std::vector<DState*> // = Determinist Finite State Machine
 };
 std::ostream & operator << (std::ostream & os, const DFSM & dfsm);
 
-void determine(StateVector &, DFSM &);
+void determine(StateVector &, DFSM &, bool stopAtFirstMatch);
 void reduce(DFSM &);
 
 #endif /* STATE_H_ */

@@ -69,7 +69,7 @@ public:
 
 	virtual ~CLLVMRE();
 
-	virtual Func * createRE(const std::string & regexp);
+	virtual Func * createRE(const std::string & regexp, bool stopAtFirstMatch = false);
 
 	virtual void setLLVMModule(llvm::Module * m);
 	virtual const llvm::Module * getLLVMModule() const;
