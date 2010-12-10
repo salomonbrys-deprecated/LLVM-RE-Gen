@@ -92,6 +92,6 @@ endif ()
 
 
 install (
-	FILES LLVMREGen-c.h  LLVMREGen-c-llvm.h  LLVMREGen.h
+	FILES LLVMREGen.h
 	DESTINATION include
 )
