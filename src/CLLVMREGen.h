@@ -82,7 +82,7 @@ public:
 	virtual void setDefaultPrefix(const std::string &);
 
 	virtual void initilizeLLVM();
-	virtual void initializeJITEngine(int optimizationLevel = 0);
+	virtual void initializeJITEngine(int optimizationLevel = 2);
 
 	static CLLVMRE & Instance();
 

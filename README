@@ -1,4 +1,6 @@
 
+INTRODUCTION
+------------
 LLVM Regular Expresion Generator is a compiler that generates state machines
 from ASCII POSIX regular expression and compile them in LLVM IR so the compiled
 regular expression can be very fast to execute at run-time.
@@ -13,6 +15,9 @@ It simply considers that each given regexp should start on each given string.
 In other word, any '(regexp)' is in fact the equivalent of '^(regexp)' in other
 regular expression libraries.
 
+
+FEATURES AND SYNTAX
+-------------------
 Here is a list of currently supported features:
 ab		= 'a' followed by 'b'
 a|b		= 'a' or 'b'
@@ -67,3 +72,75 @@ case, this expression defines a SINGLE character sequence that can recognize
 any charcater from 'A' to ']' or the charcters 'c', or '[', or 'd', or 'e'.
 Because we are in a character sequence, '[' cannot be used as a begin sequence
 token and is therefore recognized as a simple character inside the sequence.
+
+
+LLVM-REGEXP USAGE
+-----------------
+llvm-regexp is the binary utility that generates LLVM bitcode form regular
+expressions.
+Just run llvm-regexp without arguments to see it's usage.
+To create a compiled transactionnal unit object (.o) that can be linked by a
+C or C++ compiler (like gcc or g++), follow this example :
+> llvm-regexp -H C++ -p demoTest 'a[bc]*c' | llc -filetype=obj -o demoTest.o
+Llvm-regexp generates the LLVM bitcode and llc compiles it into a
+transactionnal unit. In this case, llvm-regex also generates a demoTest.h C++
+header file. You can then use the generated function in a C++ code like this :
+#include <iostream>
+#include "demoTest.h"
+int main() {
+  std::cout << demoTest_0("abcbce") << std::endl;
+}
+Of course, the same example could work on regular C code, just change the -H
+parameter of llvm-regexp to -H C and use printf instead of std::cout.
+
+
+SIMPLE LIBRARY USAGE
+--------------------
+All the code is not documented yet (my research must go on),
+but the library is very easy to use :
+
+// The only header you need
+#include <LLVMRE.h>
+
+// Create a Regular expression function.
+LLVMRE::Func * func = LLVMRE_Instance().createRE("[[:alpha:]_][[:alnum:]_]*");
+
+// Execute it. Return the number of character matched (0 if none).
+int match = func->execute("testString");
+
+As stated before, LLVMRE does not support $ and ^ but it is very easy to
+implement :
+
+// Implementation of ^
+std::string test = "testString";
+LLVMRE::Func * func = LLVMRE_Instance().createRE("[[:alpha:]_][[:alnum:]_]*");
+int match = func->execute(test.c_str());
+if (match != test.length())
+    match = 0;
+
+// Implementation of $
+std::string test = "...testString";
+LLVMRE::Func * func = LLVMRE_Instance().createRE("[[:alpha:]_][[:alnum:]_]*");
+int match;
+int start = 0;
+while (start < test.length() && (match = func->execute(test.c_str())) == 0)
+    ++start;
+
+
+LIBRARY TWEAKS
+--------------
+Simply read the comments on the LLVMRE.h file, all the library is explained.
+
+
+INSTALLATION
+------------
+Use cmake or cmake-gui.
+This library needs a CMAKE enabled LLVM library (most of distribution ships
+with LLVM without it's CMAKE part).
+
+Example under linux :
+> mkdir build
+> cd build
+> cmake -D CMAKE_BUILD_TYPE:STRING=Release ..
+> make
+> sudo make install

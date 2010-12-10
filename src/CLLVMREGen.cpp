@@ -147,6 +147,8 @@ bool CLLVMRE::CFunc::isJIT() const
 
 std::string CLLVMRE::CFunc::getFuncName() const
 {
+	if (!func)
+		return "";
 	return func->getNameStr();
 }
 
@@ -330,7 +332,7 @@ void CLLVMRE::initilizeLLVM()
 		M = new llvm::Module("LLVMRegExp", *C);
 }
 
-void CLLVMRE::initializeJITEngine(int optimizationLevel /*= 0*/)
+void CLLVMRE::initializeJITEngine(int optimizationLevel /*= 2*/)
 {
 	llvm::CodeGenOpt::Level opt = llvm::CodeGenOpt::None;
 	switch (optimizationLevel)
