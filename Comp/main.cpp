@@ -5,6 +5,10 @@
  *      Author: salomon
  */
 
+#if defined(WIN32)
+#define NOMINMAX
+#endif
+
 #include <LLVMREGen.h>
 
 #include <llvm/Module.h>

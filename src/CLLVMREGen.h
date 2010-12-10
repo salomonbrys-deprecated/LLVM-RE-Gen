@@ -1,6 +1,10 @@
 #ifndef C_LLVM_RE_GEN_H_
 #define C_LLVM_RE_GEN_H_
 
+#if defined(WIN32)
+#define NOMINMAX
+#endif
+
 #include "LLVMREGen.h"
 #include "State.h"
 #include "REParser.h"
