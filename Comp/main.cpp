@@ -95,10 +95,10 @@ int main(int argc, char ** argv)
 			std::string rePrint = (stopAtFirstMatch ? "! " : "  ") + re;
 
 			if (!outputFile.getValue().empty() && !noPrint.getValue())
-				std::cout << std::setw(align + 1) << rePrint << ": " << definition << std::endl;
+				std::cout << std::setw(align + 2) << rePrint << ": " << definition << std::endl;
 
 			if (!header.getValue().empty())
-				ofs << "/*" << std::setw(align + 1) << rePrint << " */ " << definition << std::endl;
+				ofs << "/*" << std::setw(align + 2) << rePrint << " */ " << definition << std::endl;
 		}
 
 		if (!header.getValue().empty())
